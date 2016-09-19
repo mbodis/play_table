@@ -1,0 +1,1 @@
+ln -s /home/mbodis/Documents/svab/it/arduino/arduino-touchboard/play_table_master/libs/*.h /home/mbodis/arduino-1.6.7/libraries/svb/
