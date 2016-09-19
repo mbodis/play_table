@@ -1,7 +1,7 @@
 /*******************************************************************************
 
   created: 2016-03-26
-  last modified: 2016-07-04
+  last modified: 2016-09-20
   Miroslav Bodis - play table - master
 
   MIDI docs:
@@ -31,75 +31,7 @@
 
 SoftwareSerial mySerial(12, 10); // Soft TX on 10, we don't use RX in this code
 const byte ELECTRODES_COUNT = 7;
-
-
-
-
-/*
- * MIDI KEYBOARD SETUP - SINGLE TONE MODE
- */
-byte lastNotesIdx = 0;
-//const byte whiteNotes[] = {60, 62, 64, 65, 67, 69, 71}; // default
-const byte whiteNotes[] = {60, 76, 74, 71, 69, 67, 64}; // paanko
-int noteIsOn[] = {0,0,0,0,0,0,0};
-
-/*
- * MIDI KEYBOARD SETUP - MULTI TONE MODE
- */
-const byte NOTES_COUNT = 3;
-byte NOTES_THRESHOLD_LEVEL[NOTES_COUNT] = {20, 60, 120};
-
-const byte NOTES_SETUP_COUNT = 2;
-byte whiteNotesMultiArr[NOTES_SETUP_COUNT][ELECTRODES_COUNT][NOTES_COUNT] = 
-{
-  // normal notes
-  {  {48, 50, 52}, {53, 55, 57}, {59, 60, 62}, 
-     {64, 65, 67}, {69, 71, 72}, {74, 76, 77}, {79, 81, 83}},
-     
-  // prince of persia notes
-  {
-    {48, 50, 52}, {69, 70, 73}, {74, 75, 78},
-    {64, 65, 67}, {69, 71, 72}, {74, 76, 77}, {79, 81, 83}}
-};
-
-//bool arr to know what note is on
-int noteIsOnMulti[ELECTRODES_COUNT][NOTES_COUNT] = {
-  {0,0,0}, {0,0,0}, {0,0,0}, 
-  {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
-
-// current selected note setup (assigned 1 note setup from whiteNotesMultiArr)
-byte whiteNotesMulti[ELECTRODES_COUNT][NOTES_COUNT] = {
-  {0,0,0}, {0,0,0}, {0,0,0}, 
-  {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
-
-
-
-/*
- * MIDI THRESHOLD - ACORD TONE MODE
- */
-const byte NOTES_ACORD_COUNT = 4;
-const byte NOTES_ACORD_SETUP_COUNT = 2;
-byte whiteNotesAcordArr[NOTES_ACORD_SETUP_COUNT][ELECTRODES_COUNT][NOTES_ACORD_COUNT] = 
-{
-  // normal notes
-  {  {52, 55, 59, 62}, {55, 59, 62, 64}, {57, 61, 64, 67}, 
-     {64, 64, 64, 64}, {67, 67, 67, 67}, {69, 69, 69, 69}, {71, 71, 71, 71}},
-     
-  // prince of persia notes
-  {   
-    {48, 48, 48, 48}, {69, 69, 69, 69}, {74, 74, 74, 74},
-    {64, 65, 67, 67}, {69, 71, 72, 72}, {74, 76, 77, 77}, {79, 81, 83, 83}}
-}; 
-//bool arr to know what note is on
-int noteIsOnAcord[ELECTRODES_COUNT][NOTES_ACORD_COUNT] = {
-  {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 
-  {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-
-// current selected note setup (assigned 1 note setup from whiteNotesMultiArr)
-byte whiteNotesAcord[ELECTRODES_COUNT][NOTES_ACORD_COUNT] = {
-  {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, 
-  {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-   
+byte noteSetupSelectedIdx = 0;
 
 
 /* MIDI INSTRUMENT LIBRARY:
@@ -168,114 +100,111 @@ byte whiteNotesAcord[ELECTRODES_COUNT][NOTES_ACORD_COUNT] = {
 /**************************************************************************/
 /* MY MIDI                                                               */
 /**************************************************************************/
-class MyMidi {
-  private:
-  
-  public:    
-    byte resetMIDI = 8; // Tied to VS1053 Reset line
-    byte velocity = 60;  // midi note velocity for turning on and off
-
-   
-  // functions below are little helpers based on using the SoftwareSerial
-  // as a MIDI stream input to the VS1053 - all based on stuff from Nathan Seidle
-  
-  // Send a MIDI control-change message. // svb
-  // channel ranges from 0-15
-  //first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
-  //second data byte is the value to which the controller should be set, a value from 0 to 127.
-  void noteControllChange(byte channel, byte controllerNumber, byte set) {
-    talkMIDI( (0xB0 | channel), controllerNumber, set);
-  }
-  
-  // channel 0-15
-  // pressure 0-127
-  void channelPressure(byte channel, byte pressure) {
-    talkMIDI( (0xD0 | channel), pressure, 0);
-  }
-  
-  // Send a MIDI note-on message.  Like pressing a piano key.
-  // channel ranges from 0-15
-  void noteOn(byte channel, byte note, byte attack_velocity) {
-    Serial.print("Note on: ");
-    Serial.println(note);
-    talkMIDI( (0x90 | channel), note, attack_velocity);
-  }
-  
-  // Send a MIDI note-off message.  Like releasing a piano key.
-  void noteOff(byte channel, byte note, byte release_velocity) {
-    Serial.print("Note off: ");
-    Serial.println(note);
-    talkMIDI( (0x80 | channel), note, release_velocity);
-  }
-  
-  // channel 0-15
-  // note number 0-127 (where 127 is the most pressure)
-  // pressure amount, a value from 0 to 127
-  void afterTouch(byte channel, byte note, byte release_velocity) {
-    talkMIDI( (0xA0 | channel), note, release_velocity);
-  }
-  
-  // Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,
-  // or that data values are less than 127.
-  void talkMIDI(byte cmd, byte data1, byte data2) {
-    mySerial.write(cmd);
-    mySerial.write(data1);
-  
-    // Some commands only have one data byte. All cmds less than 0xBn have 2 data bytes
-    // (sort of: http://253.ccarh.org/handout/midiprotocol/)
-    if ( (cmd & 0xF0) <= 0xB0)
-      mySerial.write(data2);
-  
-  }
-  
-  
-  // SETTING UP THE INSTRUMENT:
-  // The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
-  // below to aid you in selecting your desire instrument from within the respective instrument bank
-  
-  void setupMidi() {
-  
-    // Setup soft serial for MIDI control
-    mySerial.begin(31250);
-    Wire.begin();
-  
-    // Reset the VS1053
-    pinMode(resetMIDI, OUTPUT);
-    digitalWrite(resetMIDI, LOW);
-    delay(100);
-    digitalWrite(resetMIDI, HIGH);
-    delay(100);
-  
-  
-    // Volume - don't comment out this code!
-    talkMIDI(0xB0, 0x07, 127); //0xB0 is channel message, set channel volume to max (127)
-  
-    // ---------------------------------------------------------------------------------------------------------
-    // Melodic Instruments GM1
-    // ---------------------------------------------------------------------------------------------------------
-    // To Play "Electric Piano" (5):
-    talkMIDI(0xB0, 0, 0x00); // Default bank GM1
-    // We change the instrument by changing the middle number in the brackets
-    // talkMIDI(0xC0, number, 0); "number" can be any number from the melodic table below
-    byte INSTRUMENT_TYPE = 79;
-    talkMIDI(0xC0, INSTRUMENT_TYPE, 0); // Set instrument number. 0xC0 is a 1 data byte command(55,0)
-    // ---------------------------------------------------------------------------------------------------------
-    // Percussion Instruments (Drums, GM1 + GM2)
-    // ---------------------------------------------------------------------------------------------------------
-    // uncomment the two lines of code below to use - you will also need to comment out the two "talkMIDI" lines
-    // of code in the Melodic Instruments section above
-    // talkMIDI(0xB0, 0, 0x78); // Bank select: drums
-    // talkMIDI(0xC0, 0, 0); // Set a dummy instrument number
-    // ---------------------------------------------------------------------------------------------------------
-  }
-
-  
-};
+//class MyMidi {
+//  private:
+//  
+//  public:    
+//    byte resetMIDI = 8; // Tied to VS1053 Reset line
+//    byte velocity = 60;  // midi note velocity for turning on and off
+//   
+//  // functions below are little helpers based on using the SoftwareSerial
+//  // as a MIDI stream input to the VS1053 - all based on stuff from Nathan Seidle
+//  
+//  // Send a MIDI control-change message. // svb
+//  // channel ranges from 0-15
+//  //first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
+//  //second data byte is the value to which the controller should be set, a value from 0 to 127.
+//  void noteControllChange(byte channel, byte controllerNumber, byte set) {
+//    talkMIDI( (0xB0 | channel), controllerNumber, set);
+//  }
+//  
+//  // channel 0-15
+//  // pressure 0-127
+//  void channelPressure(byte channel, byte pressure) {
+//    talkMIDI( (0xD0 | channel), pressure, 0);
+//  }
+//  
+//  // Send a MIDI note-on message.  Like pressing a piano key.
+//  // channel ranges from 0-15
+//  void noteOn(byte channel, byte note, byte attack_velocity) {
+//    // Serial.print("Note on: ");
+//    // Serial.println(note);
+//    talkMIDI( (0x90 | channel), note, attack_velocity);
+//  }
+//  
+//  // Send a MIDI note-off message.  Like releasing a piano key.
+//  void noteOff(byte channel, byte note, byte release_velocity) {
+//    // Serial.print("Note off: ");
+//    // Serial.println(note);
+//    talkMIDI( (0x80 | channel), note, release_velocity);
+//  }
+//  
+//  // channel 0-15
+//  // note number 0-127 (where 127 is the most pressure)
+//  // pressure amount, a value from 0 to 127
+//  void afterTouch(byte channel, byte note, byte release_velocity) {
+//    talkMIDI( (0xA0 | channel), note, release_velocity);
+//  }
+//  
+//  // Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,
+//  // or that data values are less than 127.
+//  void talkMIDI(byte cmd, byte data1, byte data2) {
+//    mySerial.write(cmd);
+//    mySerial.write(data1);
+//  
+//    // Some commands only have one data byte. All cmds less than 0xBn have 2 data bytes
+//    // (sort of: http://253.ccarh.org/handout/midiprotocol/)
+//    if ( (cmd & 0xF0) <= 0xB0)
+//      mySerial.write(data2);
+//  
+//  }
+//  
+//  // SETTING UP THE INSTRUMENT:
+//  // The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
+//  // below to aid you in selecting your desire instrument from within the respective instrument bank
+//  
+//  void setupMidi() {
+//  
+//    // Setup soft serial for MIDI control
+//    mySerial.begin(31250);
+//    Wire.begin();
+//  
+//    // Reset the VS1053
+//    pinMode(resetMIDI, OUTPUT);
+//    digitalWrite(resetMIDI, LOW);
+//    delay(100);
+//    digitalWrite(resetMIDI, HIGH);
+//    delay(100);
+//  
+//  
+//    // Volume - don't comment out this code!
+//    talkMIDI(0xB0, 0x07, 127); //0xB0 is channel message, set channel volume to max (127)
+//  
+//    // ---------------------------------------------------------------------------------------------------------
+//    // Melodic Instruments GM1
+//    // ---------------------------------------------------------------------------------------------------------
+//    // To Play "Electric Piano" (5):
+//    talkMIDI(0xB0, 0, 0x00); // Default bank GM1
+//    // We change the instrument by changing the middle number in the brackets
+//    // talkMIDI(0xC0, number, 0); "number" can be any number from the melodic table below
+//    byte INSTRUMENT_TYPE = 79;
+//    talkMIDI(0xC0, INSTRUMENT_TYPE, 0); // Set instrument number. 0xC0 is a 1 data byte command(55,0)
+//    // ---------------------------------------------------------------------------------------------------------
+//    // Percussion Instruments (Drums, GM1 + GM2)
+//    // ---------------------------------------------------------------------------------------------------------
+//    // uncomment the two lines of code below to use - you will also need to comment out the two "talkMIDI" lines
+//    // of code in the Melodic Instruments section above
+//    // talkMIDI(0xB0, 0, 0x78); // Bank select: drums
+//    // talkMIDI(0xC0, 0, 0); // Set a dummy instrument number
+//    // ---------------------------------------------------------------------------------------------------------
+//  }
+//
+//};
 
 /**************************************************************************/
 /* THEMERIN                                                               */
 /**************************************************************************/
-class ThemerinMode  {
+class Themerin  {
   
   private:
   
@@ -445,8 +374,8 @@ class ThemerinMode  {
         if (volume != volume_old) {
           mMyMidi.talkMIDI(0xB0, 0x07, volume); //0xB0 is channel message, set channel volume to near max (127)
           volume_old = volume;
-          Serial.print("Volume: ");
-          Serial.println(volume);
+          // Serial.print("Volume: ");
+          // Serial.println(volume);
         }
       }
     }
@@ -458,30 +387,294 @@ class ThemerinMode  {
 /**************************************************************************/
 class TableSensor {
   private:
-    int mode = MODE_UNDEFINED;
-  //TODO
-  
+
   public:
-    const int MODE_UNDEFINED = -1;
-    const int MODE_SINGLE = 0;
-    const int MODE_MULTI = 1;
-    const int MODE_ACORD = 2;
-    const int MODE_THEMERIN = 3;
-    const int MODE_MULTI_ACORD = 3;
+    const byte TONE_MODE_SINGLE = 0;
+    const byte TONE_MODE_MULTI = 1;
+    const byte TONE_MODE_ACORD = 2;
+    const byte TONE_MODE_MULTI_ACORD = 3;
+  
+    byte sensorId = -1;
+    byte mode = -1;
+
+    /*
+     * single
+     * play single tones anytime sensor range is reached
+     */ 
+    byte noteIsOnSingle = 0;
+    byte noteValueSingle = 0;
+
+    /*
+     * multi
+     * plays one tone based on distance from sensor
+     */ 
+    byte NOTES_COUNT_MULTI;
+    byte THRESHOLD_COUNT_MULTI;
+    byte NOTES_THRESHOLD_LEVEL_MULTI[10];// 10==max we don't use all of them
+    // bool arr to know what note is on
+    byte noteIsOnMulti[5];// 5==max we don't use all of them
+    // current selected note setup
+    byte notesValueMulti[5];// 5==max we don't use all of them
+
+    /*
+     * acord
+     * play multiple tones anytime sensor range is reached
+     */     
+    byte NOTES_COUNT_ACORD;
+    // to know if note is on
+    byte noteIsOnAcord = 0;
+    // current selected note setup
+    byte noteValueAcord[5];// 5==max we don't use all of them
+   
+    /*
+     * multi acord
+     * plays multiple tones based on distance from sensor
+     */     
+    byte NOTES_COUNT_ACORD_MULTI;
+    byte THRESHOLD_COUNT_ACORD_MULTI;
+    byte NOTES_THRESHOLD_LEVEL_ACORD_MULTI[10];
+    byte noteIsOnAcordMulti[5];// 10 ==max we don't use all of them
+    byte noteValueAcordMulti[5][4];// 10 4==max we don't use all of them
+
+  void setupSingle(byte id, byte noteValue){
+    sensorId = id;
+    mode = TONE_MODE_SINGLE;
+    noteValueSingle = noteValue;
+  }
+
+  void setupMulti(byte id, byte notesSize, byte notesArr[], byte threshSize, byte thresholdArr[]){
+    sensorId = id;
+    mode = TONE_MODE_MULTI;
+
+    NOTES_COUNT_MULTI = notesSize;       
+    for (byte i=0; i<NOTES_COUNT_MULTI; i++){
+      notesValueMulti[i] = notesArr[i];
+      noteIsOnMulti[i] = 0;      
+    }
+
+    THRESHOLD_COUNT_MULTI = threshSize;
+    for (byte i=0; i<THRESHOLD_COUNT_MULTI; i++){
+      NOTES_THRESHOLD_LEVEL_MULTI[i] = thresholdArr[i];     
+    }
+
+  }  
+
+  void setupAcord(byte id, byte notesSize, byte notesArr[]){
+    sensorId = id;
+    mode = TONE_MODE_ACORD;
     
-  bool isNoteOn(int note){
-    //TODO
+    NOTES_COUNT_ACORD = notesSize;       
+    for (byte i=0; i<NOTES_COUNT_ACORD; i++){
+      noteValueAcord[i] = notesArr[i];
+    }
+  }
+  
+  void setupAcordMulti(byte id, byte notesSize, byte notesArr[3][4], byte threshSize, byte thresholdArr[]){
+    sensorId = id;
+    mode = TONE_MODE_MULTI_ACORD;
+    
+    NOTES_COUNT_ACORD_MULTI = notesSize;
+    for (byte i=0; i<3; i++){
 
-    return false;
+      noteIsOnAcordMulti[i] = 0; // acord is default off
+      
+      for (byte j=0; j<4; j++){
+        noteValueAcordMulti[i][j] = notesArr[i][j];
+      }
+    }
+
+    THRESHOLD_COUNT_ACORD_MULTI = threshSize;
+    for (byte i=0; i<THRESHOLD_COUNT_ACORD_MULTI; i++){
+      NOTES_THRESHOLD_LEVEL_ACORD_MULTI[i] = thresholdArr[i];
+    }
+    
   }
 
-  void playNote(){
-    //TODO
+  void setSensorId(byte id){
+    sensorId = id;
   }
 
-  void turnOffSensorNotes(){
-    //TODO
+  byte getSensorId(){
+    return sensorId;
   }
+  
+  byte getMode(){
+    return mode;
+  }
+    
+  void setMode(byte newMode){
+    mode = newMode;
+  }
+  
+  void playNote(MyMidi &mMyMidi, int thresholdRaw, byte thresholdFiltered){
+    
+    switch(mode){
+
+      /*
+       * TONE_MODE_SINGLE
+       */
+      case 0:
+        // note ON
+        if (noteIsOnSingle == 0 && thresholdRaw > 2) {
+          noteIsOnSingle = 1;
+          mMyMidi.noteOn(0, noteValueSingle, mMyMidi.velocity);
+      
+        // note OFF  
+        } else if (noteIsOnSingle == 1 && thresholdRaw < 2) {
+          noteIsOnSingle = 0;
+          mMyMidi.noteOff(0, noteValueSingle, mMyMidi.velocity);    
+        }
+      break;
+
+      /*
+       * TONE_MODE_MULTI
+       */
+      case 1:
+        for (byte note = 0; note < NOTES_COUNT_MULTI; note++) {
+          bool inRange = false;
+    
+          // loop through thresholh values
+          for (byte th = 0; th < THRESHOLD_COUNT_MULTI; th++) {
+            if (note == th){
+              // threhold in middle
+              if (th+1 < NOTES_COUNT_MULTI){
+                  if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_MULTI[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL_MULTI[th+1]){
+                    inRange = true;
+                  }
+              // last threshold    
+              }else{
+                if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_MULTI[th]){
+                  inRange = true;
+                }
+              }
+            }
+          }
+      
+          // note ON
+          if (noteIsOnMulti[note] == 0 && inRange) {
+            noteIsOnMulti[note] = 1;
+            mMyMidi.noteOn(0, notesValueMulti[note], mMyMidi.velocity);
+        
+          // note OFF  
+          } else if (noteIsOnMulti[note] == 1 && !inRange) {
+            noteIsOnMulti[note] = 0;            
+            mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
+          }
+       }
+        
+      break;
+
+      /* 
+       *  TONE_MODE_ACORD
+       */
+      case 2:     
+        // note ON
+        if (noteIsOnAcord == 0 && thresholdRaw > 2) {         
+            noteIsOnAcord = 1;
+            for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+              mMyMidi.noteOn(0, noteValueAcord[note], mMyMidi.velocity);      
+            }
+      
+        // note OFF  
+        } else if (noteIsOnAcord == 1 && thresholdRaw < 2) {
+            noteIsOnAcord = 0;      
+            for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+              mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
+            }
+        }
+        
+      break;
+
+      /*
+       * TONE_MODE_MULTI_ACORD
+       */
+      case 3:     
+        for (byte acord = 0; acord < NOTES_COUNT_ACORD_MULTI; acord++) {
+            bool inRange = false;
+      
+            // loop through thresholh values
+            for (byte th = 0; th < THRESHOLD_COUNT_ACORD_MULTI; th++) {
+              if (acord == th){
+                // threhold in middle
+                if (th+1 < THRESHOLD_COUNT_ACORD_MULTI){
+                    if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th+1]){
+                      inRange = true;
+                    }
+                // last threshold    
+                }else{                  
+                  if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th]){
+                    inRange = false;
+                  }
+                }
+              }
+            }
+        
+            // note ON
+            if (noteIsOnAcordMulti[acord] == 0 && inRange) {
+              noteIsOnAcordMulti[acord] = 1;
+              for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+                mMyMidi.noteOn(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
+              }              
+          
+            // note OFF  
+            } else if (noteIsOnAcordMulti[acord] == 1 && !inRange) {
+              noteIsOnAcordMulti[acord] = 0;                          
+              for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+                mMyMidi.noteOff(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
+              }   
+            }
+         }
+      break;
+    }
+  }
+
+  void sensorOff(MyMidi &mMyMidi){
+    switch(mode){
+      
+      /*
+       * TONE_MODE_SINGLE
+       */
+      case 0:
+        noteIsOnSingle = false;
+        mMyMidi.noteOff(0, noteValueSingle, mMyMidi.velocity);
+      break;
+
+      /*
+       * TONE_MODE_MULTI
+       */
+      case 1:
+        for (byte note = 0; note < NOTES_COUNT_MULTI; note++) {
+          noteIsOnMulti[note] = 0;            
+          mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
+        }
+      break;
+
+      /*
+       * TONE_MODE_ACORD
+       */
+      case 2:
+        for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+          mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
+        }
+        noteIsOnAcord = 0;
+      break;
+
+      /*
+       * TONE_MODE_MULTI_ACORD
+       */
+      case 3:
+        for (byte acord = 0; acord < NOTES_COUNT_ACORD_MULTI; acord++) {
+          
+          noteIsOnAcordMulti[acord] = 0;
+          
+          for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+            mMyMidi.noteOn(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
+          }  
+        }
+      break;
+    }    
+  }
+  
 };
 
 /**************************************************************************/
@@ -509,33 +702,34 @@ class MyTable {
     int electrodeLastValues[ELECTRODES_COUNT] = {0,0,0,0,0,0,0}; // 2-255
 
     /* KNOB SETUP */
-    const int PIN_KNOB_VOLUME = 0;
-    const int PIN_KNOB_NOTES = 1;
+    const byte PIN_KNOB_VOLUME = 0;
+    const byte PIN_KNOB_NOTES = 1;
     
-    const int MODE_SINGLE_TONE = 0;
-    const int MODE_MULTI_TONE = 1;
-    const int MODE_ACORD_TONE = 2;
-    const int MODE_THEMERIN = 3;
-    const int MODE_COUNT = 4;
+    const byte PLAY_MODE_TONES = 0;
+    const byte PLAY_MODE_THEMERIN = 1;
+    const byte MODE_COUNT = 2;
   
-    int selectedMode = MODE_ACORD_TONE;
+    byte selectedMode = PLAY_MODE_TONES;
   
-    const int ELECTRODES_ARR[7] = {
+    const byte ELECTRODES_ARR[ELECTRODES_COUNT] = {
       PROX_ELECTRODE_0, PROX_ELECTRODE_1, PROX_ELECTRODE_2,
       PROX_ELECTRODE_3, PROX_ELECTRODE_4, PROX_ELECTRODE_5,
       PROX_ELECTRODE_6 
     };
   
+  TableSensor mTableSensors[ELECTRODES_COUNT];  
+  
   void setupButton(){
     pinMode(buttonPin, INPUT);
   }
 
-  void toggleTones(byte velocity, MyMidi mMyMidi){
+  void toggleTones(byte velocity, MyMidi &mMyMidi){
     if (digitalRead(buttonPin) == HIGH && buttonState == LOW) {
       buttonState = HIGH;
       selectedMode = (selectedMode+1) % MODE_COUNT;
-      
-      for (int i=0;i<selectedMode+1;i++){
+
+      // play beeps to know what  mode is on 
+      for (byte i=0;i<selectedMode+1;i++){
         mMyMidi.noteOn(0, 60, velocity);
         delay(500);
         mMyMidi.noteOff(0, 60, velocity);
@@ -546,157 +740,119 @@ class MyTable {
     }
   }
 
-  void setVolumeByPotentiometer(int analogInput, MyMidi mMyMidi){
-    int volume = analogRead(analogInput);
+  void setVolumeByPotentiometer(MyMidi &mMyMidi){
+    int volume = analogRead(PIN_KNOB_VOLUME);
     mMyMidi.talkMIDI(0xB0, 0x07, abs(1000-volume)/8);
     //Serial.print("potentiometer: ");
     //Serial.println(vav);
   }
 
-  void assignNotes(int n){
-    for (byte i=0; i<ELECTRODES_COUNT; i++){
-      for (byte j=0; j<NOTES_COUNT; j++){
-        whiteNotesMulti[i][j] = whiteNotesMultiArr[n][i][j];
-      }      
-    }
-  
-    for (byte i=0; i<ELECTRODES_COUNT; i++){
-      for (byte j=0; j<NOTES_ACORD_COUNT; j++){
-        whiteNotesAcord[i][j] = whiteNotesAcordArr[n][i][j];
-      }      
-    }
+  void setupNotes(byte newNoteSetupIdx){
+    //TODO switch by idx
+    testNotesSetup();
+  }
+
+  void testNotesSetup(){
+    // single mode
+    mTableSensors[0].setupSingle(0, 60);
+//    mTableSensors[1].setupSingle(1, 62);
+//    mTableSensors[2].setupSingle(2, 64);
+//    mTableSensors[3].setupSingle(3, 65);
+//    mTableSensors[4].setupSingle(4, 67);
+//    mTableSensors[5].setupSingle(5, 69);
+//    mTableSensors[6].setupSingle(6, 71);
+
+    // multi mode
+    byte THRESHOLD_LEVEL[] = {20, 60, 120};    
+//    byte arr0[] = {48, 50, 52};
+//    mTableSensors[0].setupMulti(0, 3, arr0, 3, THRESHOLD_LEVEL);
+    byte arr1[] = {53, 55, 57};
+    mTableSensors[1].setupMulti(1, 3, arr1, 3, THRESHOLD_LEVEL);
+//    byte arr2[] = {59, 60, 62};
+//    mTableSensors[2].setupMulti(2, 3, arr2, 3, THRESHOLD_LEVEL);
+//    byte arr3[] = {64, 65, 67};
+//    mTableSensors[3].setupMulti(3, 3, arr3, 3, THRESHOLD_LEVEL);
+//    byte arr4[] = {69, 71, 72};
+//    mTableSensors[4].setupMulti(4, 3, arr4, 3, THRESHOLD_LEVEL);
+//    byte arr5[] = {74, 76, 77};
+//    mTableSensors[5].setupMulti(5, 3, arr5, 3, THRESHOLD_LEVEL);
+//    byte arr6[] = {79, 81, 52};
+//    mTableSensors[6].setupMulti(6, 3, arr6, 3, THRESHOLD_LEVEL);
+
+    // acord mode
+//    byte arr20[] = {52, 55, 59, 62};
+//    mTableSensors[0].setupAcord(0, 4, arr20);
+//    byte arr21[] = {55, 59, 62, 64};
+//    mTableSensors[1].setupAcord(1, 4, arr21);
+    byte arr22[] = {57, 61, 64, 67};
+    mTableSensors[2].setupAcord(2, 4, arr22);
+//    byte arr23[] = {64, 64, 64, 64};
+//    mTableSensors[3].setupAcord(3, 4, arr23);
+//    byte arr24[] = {67, 67, 67, 67};
+//    mTableSensors[4].setupAcord(4, 4, arr24);
+//    byte arr25[] = {69, 69, 69, 69};
+//    mTableSensors[5].setupAcord(5, 4, arr25);
+//    byte arr26[] = {71, 71, 71, 71};
+//    mTableSensors[6].setupAcord(6, 4, arr26);
+
+    // acord multi mode
+    byte AMM_THRESHOLD_LEVEL[] = {20, 60, 120};
+    byte arr33[3][4] = { {48, 50, 52, 48}, {57, 61, 64, 67}, {59, 60, 62, 59}};    
+    mTableSensors[3].setupAcordMulti(3, 4, arr33, 3, AMM_THRESHOLD_LEVEL);    
+   
   }
   
   /*
    * acord and multi note mode
    */ 
-  void setMidiNotesByPotentiometer(int analogInput, MyMidi mMyMidi){
+  void setMidiNotesByPotentiometer(MyMidi &mMyMidi){//, MyTable &mMyTable, MyCommunicator &mMyCommunicator){
     // v == <0, 1000>
-    int v = abs(1000-analogRead(analogInput));
+    int v = abs(1000-analogRead(PIN_KNOB_NOTES));
     
-    int newNotesIdx = -1;
+    byte newNotesIdx = -1;
     if (v > 0 && v < 400){
       newNotesIdx = 0;
     }else if ( v > 600){
       newNotesIdx = 1;
     }
   
-    if (newNotesIdx != -1 && newNotesIdx != lastNotesIdx){
-      lastNotesIdx = newNotesIdx;        
-      turnOffAllNotesMulti(mMyMidi);
-      turnOffAllNotesAcord(mMyMidi);
-      assignNotes(lastNotesIdx);
+    if (newNotesIdx != -1 && newNotesIdx != noteSetupSelectedIdx){
+      noteSetupSelectedIdx = newNotesIdx;        
+      turnOffAllNotes(mMyMidi);
+      setupNotes(noteSetupSelectedIdx);
+      //initScreenSaverSensorType(mMyTable, mMyCommunicator);
     }    
   }
 
-  void turnOffAllNotesMulti(MyMidi mMyMidi){
-    for (int elc = 0; elc < ELECTRODES_COUNT; elc++) {
-      for (int note = 0; note < NOTES_COUNT; note++) {
-        if (noteIsOnMulti[elc][note] == 1 ) {
-          noteIsOnMulti[elc][note] = 0;
-          mMyMidi.noteOff(0, whiteNotesMulti[elc][note], mMyMidi.velocity);  
-        }
-      }
-    }
-  }
-  
-  void turnOffAllNotesAcord(MyMidi mMyMidi){
-    for (int elc = 0; elc < ELECTRODES_COUNT; elc++) {
-      for (int note = 0; note < NOTES_ACORD_COUNT; note++) {
-        if (noteIsOnAcord[elc][note] == 1 ) {
-          noteIsOnAcord[elc][note] = 0;
-          mMyMidi.noteOff(0, whiteNotesAcord[elc][note], mMyMidi.velocity);  
-        }
-      }
+  /*
+   * switching to another mode
+   */
+  void turnOffAllNotes(MyMidi mMyMidi){
+    for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
+       mTableSensors[elc].sensorOff(mMyMidi);
     }
   }
 
-  void playSingleToneMode(MyMidi mMyMidi) {
-  
-    for (int elc = 0; elc < ELECTRODES_COUNT; elc++) {
-      
-      // note ON
-      if (noteIsOn[elc] == 0 && electrodeLastValueRaw[elc] > 2) {
-        noteIsOn[elc] = 1;
-        mMyMidi.noteOn(0, whiteNotes[elc], mMyMidi.velocity);
-    
-      // note OFF  
-      } else if (noteIsOn[elc] == 1 && electrodeLastValueRaw[elc] < 2) {
-        noteIsOn[elc] = 0;
-        mMyMidi.noteOff(0, whiteNotes[elc], mMyMidi.velocity);    
-      }
-      
-    }
-      
-  }
-  
-  void playMultiToneMode(MyMidi mMyMidi){
-  
-    for (int elc = 0; elc < ELECTRODES_COUNT; elc++) {
-      for (int note = 0; note < NOTES_COUNT; note++) {
-        
-        int inRange = 0;
-  
-        // loop through threshol values
-        for (int th = 0; th < NOTES_COUNT; th++) {
-          if (note == th){
-            // threhold in middle
-            if (th+1 < NOTES_COUNT){
-                if (electrodeLastValues[elc]>= NOTES_THRESHOLD_LEVEL[th] && electrodeLastValues[elc] < NOTES_THRESHOLD_LEVEL[th+1]){
-                  inRange = 1;
-                }
-            // last threshold    
-            }else{
-              if (electrodeLastValues[elc]>= NOTES_THRESHOLD_LEVEL[th]){
-                inRange = 1;
-              }
-            }
-          }
-        }
-    
-        // note ON
-        if (noteIsOnMulti[elc][note] == 0 && inRange == 1) {
-          noteIsOnMulti[elc][note] = 1;
-          mMyMidi.noteOn(0, whiteNotesMulti[elc][note], mMyMidi.velocity);
-      
-        // note OFF  
-        } else if (noteIsOnMulti[elc][note] == 1 && inRange == 0) {
-          noteIsOnMulti[elc][note] = 0;
-          mMyMidi.noteOff(0, whiteNotesMulti[elc][note], mMyMidi.velocity);    
-        }
-      }
-    }
-    
-  }
-  
-  void playAcordToneMode(MyMidi mMyMidi){
-    for (int elc = 0; elc < ELECTRODES_COUNT; elc++) {
-      for (int note = 0; note < NOTES_ACORD_COUNT; note++) {
-      
-        // note ON
-        if (noteIsOnAcord[elc][note] == 0 && electrodeLastValueRaw[elc] > 2) {         
-            noteIsOnAcord[elc][note] = 1;
-            mMyMidi.noteOn(0, whiteNotesAcord[elc][note], mMyMidi.velocity);      
-      
-        // note OFF  
-        } else if (noteIsOnAcord[elc][note] == 1 && electrodeLastValueRaw[elc] < 2) {
-            noteIsOnAcord[elc][note] = 0;      
-            mMyMidi.noteOff(0, whiteNotesAcord[elc][note], mMyMidi.velocity);         
-        }
-      }
+  /*
+   * 
+   * loop all touch sensors
+   *
+   */
+  void playToneMode(MyMidi &mMyMidi){
+    for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {     
+      mTableSensors[elc].playNote(mMyMidi, electrodeLastValueRaw[elc], electrodeLastValues[elc]);
+      // TODO keep playing note that was released and is also somewhere played
     }
   }
 
-  void playSelectedMode(ThemerinMode mThemerinMode, MyMidi mMyMidi){
+  void playSelectedMode(Themerin &mThemerin, MyMidi &mMyMidi){
     // play tones
-    if (selectedMode == MODE_SINGLE_TONE){
-      playSingleToneMode(mMyMidi);  
-    }else if (selectedMode == MODE_MULTI_TONE){
-      playMultiToneMode(mMyMidi);
-    }else if (selectedMode == MODE_ACORD_TONE){
-      playAcordToneMode(mMyMidi);
-    }else if (selectedMode == MODE_THEMERIN){
-      mThemerinMode.playThereminMode(mMyMidi); 
+    //Serial.print("selectedMode: ");
+    //Serial.println(selectedMode);
+    if (selectedMode == PLAY_MODE_TONES){      
+      playToneMode(mMyMidi);
+    }else if (selectedMode == PLAY_MODE_THEMERIN){
+      mThemerin.playThereminMode(mMyMidi); 
     }
   }
   
@@ -719,14 +875,14 @@ class TouchSensors{
       MPR121.updateAll();
     }
     
-    void readValuesFromElectrodes(MyTable mMyTable) {
-      for (int i = 0; i < ELECTRODES_COUNT; i++) {
-        readElectrodeValue(mMyTable, mMyTable.ELECTRODES_ARR[i]);
+    void readValuesFromElectrodes(MyTable &mMyTable) {
+      for (byte i = 0; i < ELECTRODES_COUNT; i++) {
+        readElectrodeValue(mMyTable, mMyTable.ELECTRODES_ARR[i]);        
       }
     
     }
     
-    void readElectrodeValue(MyTable mMyTable, int electrode) {
+    void readElectrodeValue(MyTable &mMyTable, byte electrode) {
     
       // read the difference between the measured baseline and the measured continuous data
       int reading = MPR121.getBaselineData(electrode) - MPR121.getFilteredData(electrode);
@@ -811,25 +967,27 @@ class MyCommunicator{
 
   private:
     
-    
   public:
+
+    /*
+     * init communication
+     */
+    void setupSerialCommunication() {
+      Serial.begin(9600);
+      Serial1.begin(9600);
+    }
   
     /*
      * 0-11 electrodes
      * 30-41 IDs
      */
-    void sendValuesToSlaves(MyTable mMyTable) {
-      for (int i = 0; i < ELECTRODES_COUNT; i++) {
+    void sendValuesToSlaves(MyTable &mMyTable) {
+      for (byte i = 0; i < ELECTRODES_COUNT; i++) {
         sendMessageToSlave(i+30, mMyTable.electrodeLastValues[i]);
       }
-    }
-
-    void setupSerialCommunication() {
-      Serial.begin(9600);
-      Serial1.begin(9600);
-    }
+    }    
     
-    void sendMessageToSlave(int idSlave, int valueSlave) {
+    void sendMessageToSlave(byte idSlave, byte valueSlave) {
       Serial1.write(PROTOCOL_ID_DELIMETER);
       Serial1.write(idSlave);
       Serial1.write(PROTOCOL_VALUE_DELIMETER);
@@ -840,8 +998,8 @@ class MyCommunicator{
      * testing communication
      */
      // testing
-    int testNumber = 0;
-    int testNumber2 = 128;
+    byte testNumber = 0;
+    byte testNumber2 = 128;
     void testSerialCommunication() {
       Serial1.write(PROTOCOL_ID_DELIMETER); //ID DELIMETER
       Serial1.write(20); //ID
@@ -873,10 +1031,47 @@ class VisualEffects{
   private:
 
   public:
+
+    void initScreenSaverSensorType(MyTable &mMyTable, MyCommunicator &mMyCommunicator){
+
+      int multiTone = 42;
+      int acordMultiTone = 42;
+      
+      for (byte n = 0; n<9; n++){  
+        for (byte sensor = 0; sensor<ELECTRODES_COUNT; sensor++){  
+          
+          if (mMyTable.mTableSensors[sensor].getMode() == 0 || mMyTable.mTableSensors[sensor].getMode() == 2){
+            if (n%2 == 0){
+              mMyCommunicator.sendMessageToSlave(mMyTable.mTableSensors[sensor].getSensorId()+30, 255);
+            }else{
+              mMyCommunicator.sendMessageToSlave(mMyTable.mTableSensors[sensor].getSensorId()+30, 2);
+            }
+          }
+
+          if (mMyTable.mTableSensors[sensor].getMode() == 1){
+            if ((n%4)==0){
+              multiTone+=80;  
+              if (multiTone >255)multiTone=255;
+            }
+            mMyCommunicator.sendMessageToSlave(mMyTable.mTableSensors[sensor].getSensorId()+30, multiTone);
+          }
+
+          if (mMyTable.mTableSensors[sensor].getMode() == 3){
+            if ((n%4)==0){
+              acordMultiTone+=80;  
+              if (acordMultiTone >255)acordMultiTone=255;
+            }
+            mMyCommunicator.sendMessageToSlave(mMyTable.mTableSensors[sensor].getSensorId()+30, multiTone);
+          }
+                  
+        }
+        delay(300);
+      }
+    }
     
-    void initScreenSaver(MyCommunicator mMyCommunicator){
+    void initScreenSaver(MyCommunicator &mMyCommunicator){
     
-      for (int loop = 0; loop<2; loop++){  
+      for (byte loop = 0; loop<2; loop++){  
         int val = 0;
         while(true){
           for (int ele = 30; ele<38; ele++){    
@@ -889,7 +1084,7 @@ class VisualEffects{
       
         val = 255;
         while(true){
-          for (int ele = 30; ele<38; ele++){    
+          for (byte ele = 30; ele<38; ele++){    
             mMyCommunicator.sendMessageToSlave(ele, val);      
           }
             delay(25);
@@ -899,7 +1094,7 @@ class VisualEffects{
       }  
     }
     
-    void initScreenSaver2(MyCommunicator mMyCommunicator){
+    void initScreenSaver2(MyCommunicator &mMyCommunicator){
       int val = 0;
       
         while(true){
@@ -923,23 +1118,21 @@ class VisualEffects{
   CLASS DEFINITION
  */
 MyMidi mMyMidi;
-ThemerinMode mThemerinMode;
+Themerin mThemerin;
 MyTable mMyTable;
 MyCommunicator mMyCommunicator;
 TouchSensors mTouchSensors;
 VisualEffects mVisualEffects;
 
-
-
 /*
    MAIN - SETUP
 */
 void setup() {
-  
+
   mMyTable.setupButton();
 
   // set default notes
-  mMyTable.assignNotes(lastNotesIdx);
+  mMyTable.setupNotes(noteSetupSelectedIdx);
 
   // setup comunication
   mMyCommunicator.setupSerialCommunication();
@@ -953,7 +1146,8 @@ void setup() {
   // initialise MIDI
   mMyMidi.setupMidi();
 
-  mVisualEffects.initScreenSaver(mMyCommunicator);
+  // do some initial led effect
+  mVisualEffects.initScreenSaver(mMyCommunicator);  
 }
 
 /*
@@ -965,7 +1159,7 @@ void loop() {
   mTouchSensors.updateReading();
   mTouchSensors.readValuesFromElectrodes(mMyTable);
 
-  mMyTable.playSelectedMode(mThemerinMode, mMyMidi);
+  mMyTable.playSelectedMode(mThemerin, mMyMidi);
 
   //toggle modes
   mMyTable.toggleTones(mMyMidi.velocity, mMyMidi);  
@@ -974,10 +1168,10 @@ void loop() {
   mMyCommunicator.sendValuesToSlaves(mMyTable);
 
   // knob - volume
-  mMyTable.setVolumeByPotentiometer(mMyTable.PIN_KNOB_VOLUME, mMyMidi);
+  mMyTable.setVolumeByPotentiometer(mMyMidi);
   
   // knob - notes type
-  mMyTable.setMidiNotesByPotentiometer(mMyTable.PIN_KNOB_NOTES, mMyMidi);
+  mMyTable.setMidiNotesByPotentiometer(mMyMidi);//, mMyTable, mMyCommunicator);
 }
 
 
