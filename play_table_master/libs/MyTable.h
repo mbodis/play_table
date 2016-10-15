@@ -25,7 +25,7 @@ class MyTable {
   
   public:
   	int noteSetupSelectedIdx = -1;
-    float electrodeLastValueRaw[ELECTRODES_COUNT] = { 0, 0, 0, 0, 0, 0, 0};
+    float electrodeLastValueRaw[ELECTRODES_COUNT] = { 0, 0, 0, 0, 0, 0, 0}; // 0 - 50
     int electrodeLastValues[ELECTRODES_COUNT] = {0,0,0,0,0,0,0}; // 2-255
 
     /* KNOB SETUP */
@@ -44,7 +44,9 @@ class MyTable {
       PROX_ELECTRODE_6 
     };
   
-  TableSensor mTableSensors[ELECTRODES_COUNT];  
+  NoteSetup mNoteSetup; 
+
+  // TableSensor mTableSensors[ELECTRODES_COUNT];  
   
   void setupButton(){
     pinMode(buttonPin, INPUT);
@@ -69,105 +71,55 @@ class MyTable {
 
   void setVolumeByPotentiometer(MyMidi &mMyMidi){
     int volume = analogRead(PIN_KNOB_VOLUME);
-    mMyMidi.talkMIDI(0xB0, 0x07, abs(1000-volume)/8);
+    mMyMidi.setVolume(abs(1000-volume)/8);
     //Serial.print("potentiometer: ");
     //Serial.println(vav);
   }
 
-  void setupNotes(MyMidi &mMyMidi, byte newNoteSetupIdx){
+  void setupNotes(MyMidi &mMyMidi, byte newNoteSetupIdx, bool playTones){
 
-    // play beeps to know what  mode is on 
-    // for (byte i=0;i<newNoteSetupIdx+1;i++){
-    //   mMyMidi.noteOn(0, 60, mMyMidi.velocity);
-    //   delay(500);
-    //   mMyMidi.noteOff(0, 60, mMyMidi.velocity);
-    // }
-
-    switch(newNoteSetupIdx){
-      case 0:
-      break;
-
-      case 1:
-      break;      
+    if (playTones){      
+      // play beeps to know what  mode is on 
+      for (byte i=0;i<newNoteSetupIdx+1;i++){
+        mMyMidi.noteOn(0, 60, mMyMidi.velocity);
+        delay(250);
+        mMyMidi.noteOff(0, 60, mMyMidi.velocity);
+      }
     }
-    //TODO switch by idx
-    testNotesSetup();
-  }
 
-  void testNotesSetup(){
-    // single mode
-    mTableSensors[0].setupSingle(0, 60);
-//    mTableSensors[1].setupSingle(1, 62);
-//    mTableSensors[2].setupSingle(2, 64);
-//    mTableSensors[3].setupSingle(3, 65);
-   mTableSensors[4].setupSingle(4, 67);
-   // mTableSensors[5].setupSingle(5, 69);
-   // mTableSensors[6].setupSingle(6, 71);
-
-    // multi mode
-    byte THRESHOLD_LEVEL[] = {20, 60, 120};    
-//    byte arr0[] = {48, 50, 52};
-//    mTableSensors[0].setupMulti(0, 3, arr0, 3, THRESHOLD_LEVEL);
-    byte arr1[] = {53, 55, 57};
-    mTableSensors[1].setupMulti(1, 3, arr1, 3, THRESHOLD_LEVEL);
-//    byte arr2[] = {59, 60, 62};
-//    mTableSensors[2].setupMulti(2, 3, arr2, 3, THRESHOLD_LEVEL);
-//    byte arr3[] = {64, 65, 67};
-//    mTableSensors[3].setupMulti(3, 3, arr3, 3, THRESHOLD_LEVEL);
-//    byte arr4[] = {69, 71, 72};
-//    mTableSensors[4].setupMulti(4, 3, arr4, 3, THRESHOLD_LEVEL);
-   byte arr5[] = {74, 76, 77};
-   mTableSensors[5].setupMulti(5, 3, arr5, 3, THRESHOLD_LEVEL);
-   byte arr6[] = {79, 81, 52};
-   mTableSensors[6].setupMulti(6, 3, arr6, 3, THRESHOLD_LEVEL);
-
-    // acord mode
-//    byte arr20[] = {52, 55, 59, 62};
-//    mTableSensors[0].setupAcord(0, 4, arr20);
-//    byte arr21[] = {55, 59, 62, 64};
-//    mTableSensors[1].setupAcord(1, 4, arr21);
-    byte arr22[] = {57, 61, 64, 67};
-    mTableSensors[2].setupAcord(2, 4, arr22);
-//    byte arr23[] = {64, 64, 64, 64};
-//    mTableSensors[3].setupAcord(3, 4, arr23);
-//    byte arr24[] = {67, 67, 67, 67};
-//    mTableSensors[4].setupAcord(4, 4, arr24);
-//    byte arr25[] = {69, 69, 69, 69};
-//    mTableSensors[5].setupAcord(5, 4, arr25);
-//    byte arr26[] = {71, 71, 71, 71};
-//    mTableSensors[6].setupAcord(6, 4, arr26);
-
-    // acord multi mode
-    byte AMM_THRESHOLD_LEVEL[] = {20, 60, 120};
-    byte arr33[3][4] = { {48, 50, 52, 48}, {57, 61, 64, 67}, {59, 60, 62, 59}};    
-    mTableSensors[3].setupAcordMulti(3, 4, arr33, 3, AMM_THRESHOLD_LEVEL);    
-   
+    mNoteSetup.setupNotes(newNoteSetupIdx);
   }
   
   /*
    * acord and multi note mode
    */ 
   void setMidiNotesByPotentiometer(MyMidi &mMyMidi){
-    // v == <0, 1000>
+    // v == <44, 922>
     int v = abs(1000-analogRead(PIN_KNOB_NOTES));
-    
+  
     byte newNotesIdx = -1;
-    if (v > 0 && v < 400){
+    if (v < 224){
       newNotesIdx = 0;
-    }else if ( v > 600){
+    }else if (v > 276 && v < 456){
       newNotesIdx = 1;
+    }else if (v > 508 && v < 688){
+      newNotesIdx = 2;
+    }else if ( v > 740){
+      newNotesIdx = 3;
+    }else{
+      newNotesIdx = noteSetupSelectedIdx;
     }
   
     // initial state
     if (noteSetupSelectedIdx == -1){
       noteSetupSelectedIdx = newNotesIdx;
-      setupNotes(mMyMidi, noteSetupSelectedIdx);
+      setupNotes(mMyMidi, noteSetupSelectedIdx, false);
 
     // toggle by user
     }else if (newNotesIdx != -1 && newNotesIdx != noteSetupSelectedIdx){
       noteSetupSelectedIdx = newNotesIdx;        
       turnOffAllNotes(mMyMidi);
-      setupNotes(mMyMidi, noteSetupSelectedIdx);
+      setupNotes(mMyMidi, noteSetupSelectedIdx, true);
       initScreenSaverSensorType();
     }    
   }
@@ -177,7 +129,7 @@ class MyTable {
    */
   void turnOffAllNotes(MyMidi mMyMidi){
     for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
-       mTableSensors[elc].sensorOff(mMyMidi);
+       mNoteSetup.mTableSensors[elc].sensorOff(mMyMidi);
     }
   }
 
@@ -188,8 +140,7 @@ class MyTable {
    */
   void playToneMode(MyMidi &mMyMidi){
     for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {     
-      mTableSensors[elc].playNote(mMyMidi, electrodeLastValueRaw[elc], electrodeLastValues[elc]);
-      // TODO keep playing note that was released and is also somewhere played
+      mNoteSetup.mTableSensors[elc].playNote(mMyMidi, electrodeLastValueRaw[elc], electrodeLastValues[elc]);
     }
   }
 
@@ -205,65 +156,73 @@ class MyTable {
   }
 
   /*
-     * init communication
-     */
-    void setupSerialCommunication() {
-      Serial.begin(9600);
-      Serial1.begin(9600);
+   * init communication
+   */
+  void setupSerialCommunication() {
+    Serial.begin(9600);
+    Serial1.begin(9600);
+  }
+
+  /*
+   * 0-11 electrodes
+   * 30-41 IDs
+   */
+  void sendValuesToSlaves() {
+    for (byte i = 0; i < ELECTRODES_COUNT; i++) {
+      sendMessageToSlave(i+SLAVE_FIRST_ID, electrodeLastValues[i]);
     }
-  
-    /*
-     * 0-11 electrodes
-     * 30-41 IDs
-     */
-    void sendValuesToSlaves() {
-      for (byte i = 0; i < ELECTRODES_COUNT; i++) {
-        sendMessageToSlave(i+30, electrodeLastValues[i]);
-      }
-    }    
+  }    
+
+  void sendMessageToSlave(byte idSlave, byte valueSlave) {
+    Serial1.write(PROTOCOL_ID_DELIMETER);
+    Serial1.write(idSlave);
+    Serial1.write(PROTOCOL_VALUE_DELIMETER);
+    Serial1.write(valueSlave);
+  }
+
+  void initScreenSaverSensorType(){
     
-    void sendMessageToSlave(byte idSlave, byte valueSlave) {
-      Serial1.write(PROTOCOL_ID_DELIMETER);
-      Serial1.write(idSlave);
-      Serial1.write(PROTOCOL_VALUE_DELIMETER);
-      Serial1.write(valueSlave);
+    for (byte sensor = 0; sensor<ELECTRODES_COUNT; sensor++){  
+      mNoteSetup.mTableSensors[sensor].visualLedsHelper = 2;
     }
 
-    void initScreenSaverSensorType(){
-      
+    for (byte n = 0; n<13; n++){  
       for (byte sensor = 0; sensor<ELECTRODES_COUNT; sensor++){  
-        mTableSensors[sensor].visualLedsHelper = 2;
-      }
-
-      for (byte n = 0; n<13; n++){  
-        for (byte sensor = 0; sensor<ELECTRODES_COUNT; sensor++){  
-          
-          // SINGLE TONE MODE 
-          if (mTableSensors[sensor].getMode() == 0 ){
-            sendMessageToSlave(mTableSensors[sensor].getSensorId()+30, 128);            
-          }
-
-          // ACORD TONE MODE
-          if (mTableSensors[sensor].getMode() == 2){
-            sendMessageToSlave(mTableSensors[sensor].getSensorId()+30, 255);            
-          }
-
-          // MULTI TONE
-          if (mTableSensors[sensor].getMode() == 1){
-            mTableSensors[sensor].incVisualLedHelper(9);                              
-            sendMessageToSlave(mTableSensors[sensor].getSensorId()+30, mTableSensors[sensor].visualLedsHelper);
-          }
-
-          // ACORD MULTI TONE
-          if (mTableSensors[sensor].getMode() == 3){            
-            mTableSensors[sensor].incVisualLedHelper(18);                    
-            sendMessageToSlave(mTableSensors[sensor].getSensorId()+30, mTableSensors[sensor].visualLedsHelper);
-          }
-                  
+        
+        /*
+         * SINGLE TONE MODE
+         */ 
+        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_SINGLE){
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, 128);            
         }
-        delay(300);
+
+        /*
+         * ACORD TONE MODE
+         */
+        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_ACORD){
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, 255);            
+        }
+
+        /*
+         * MULTI TONE
+         */
+        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI){
+          mNoteSetup.mTableSensors[sensor].incVisualLedHelper(9);                              
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor].visualLedsHelper);
+        }
+
+        /*
+         * ACORD MULTI TONE
+         */
+        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI_ACORD){            
+          mNoteSetup.mTableSensors[sensor].incVisualLedHelper(18);                    
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor].visualLedsHelper);
+        }
+                
       }
+      delay(150);
     }
+  }
   
 };
 #endif

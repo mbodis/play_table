@@ -10,8 +10,6 @@ class MyCommunicator{
     
   public:
 
-    
-
     /*
      * testing communication
      */

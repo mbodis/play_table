@@ -27,12 +27,12 @@
   
 *******************************************************************************/
 #include <MPR121.h>
-#include <SoftwareSerial.h>
 
 #include <Constants.h>
 #include <MyMidi.h>
 #include <Themerin.h>
 #include <TableSensor.h>
+#include <NoteSetup.h>
 #include <MyTable.h>
 #include <TouchSensors.h>
 #include <MyCommunicator.h>
@@ -52,13 +52,13 @@ VisualEffects mVisualEffects;
    MAIN - SETUP
 */
 void setup() {
-  // setup midi output
-  mMyMidi.midi2UsbSetup();
-
+  // setup midi
+  mMyMidi.init();
+  
   mMyTable.setupButton();
 
   // set default notes
-  mMyTable.setupNotes(mMyMidi, 0);
+  mMyTable.setupNotes(mMyMidi, 0, false);
 
   // setup comunication
   mMyTable.setupSerialCommunication();

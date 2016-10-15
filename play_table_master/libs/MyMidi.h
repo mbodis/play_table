@@ -9,6 +9,8 @@
 
 /* MIDI INSTRUMENT LIBRARY:
 
+  http://www.ccarh.org/courses/253/handout/midiprotocol/
+
   MELODIC INSTRUMENTS (GM1)
   When using the Melodic bank (0x79 - same as default), open chooses an instrument and the octave to map
   To use these instruments below change "number" in talkMIDI(0xC0, number, 0) in setupMidi()
@@ -70,73 +72,136 @@
   42  Closed Hi-hat [EXC 1]      58  Vibra-slap                74  Long Guiro [EXC 3]
 
 */
+
 class MyMidi {
 
   private:
     MIDIEvent e;
+    byte notesOn[MAX_NOTES_TO_PLAY_AT_ONCE];
 
   public:    
     byte resetMIDI = 8; // Tied to VS1053 Reset line
     byte velocity = 60;  // midi note velocity for turning on and off
     
-   
-   // MyMidi::MyMidi(){
+    byte RX = 12;
+    byte TX = 10;
+    SoftwareSerial *mySerial;
+    
 
-   // }
+   void init(){
+
+      // setup Serial
+      mySerial = new SoftwareSerial(RX, TX);
+
+      // empty playing notes array 
+      for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
+        notesOn[b] = 0;
+      }
+
+      // setup midi output
+      midi2UsbSetup();
+   }
+
+   void addNoteToPlayList(byte note){
+      for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
+        if (notesOn[b] == 0){
+          notesOn[b] = note;
+          break;
+        }
+      }
+   }
+
+   void removeNoteFromPlayList(byte note){
+      for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
+        if (notesOn[b] == note){
+          notesOn[b] = 0;
+          break;
+        }
+      }
+   }
+
+   bool isNoteOnPlayList(byte note){
+      for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
+        if (notesOn[b] == note){
+          return true;
+        }
+      }
+      return false;
+   }
+
   // functions below are little helpers based on using the SoftwareSerial
   // as a MIDI stream input to the VS1053 - all based on stuff from Nathan Seidle
+
+  /*
+   * Send a MIDI note-on message.  Like pressing a piano key.
+   * channel ranges from 0-15
+   */
+  void noteOn(byte channel, byte note, byte attack_velocity) {
+      addNoteToPlayList(note);
+      talkMIDI( (0x90 | channel), note, attack_velocity);
+      midi2Usb(0x90, note);
+  }
   
-  // Send a MIDI control-change message. // svb
-  // channel ranges from 0-15
-  //first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
-  //second data byte is the value to which the controller should be set, a value from 0 to 127.
+  /*
+   * Send a MIDI note-off message.  Like releasing a piano key.
+   */
+  void noteOff(byte channel, byte note, byte release_velocity) {
+    removeNoteFromPlayList(note);
+    if (!isNoteOnPlayList(note)){
+      talkMIDI( (0x80 | channel), note, release_velocity);
+      midi2Usb(0x80, note);
+    }
+  }
+  
+  /*
+   * @svb
+   * channel 0-15
+   * note a value from 0 to 127
+   * pressure amount 0-127 (where 127 is the most pressure)
+   */ 
+  void afterTouch(byte channel, byte note, byte pressure) {
+    talkMIDI( (0xA0 | channel), note, pressure);
+    midi2Usb(0xA0, note);
+  }
+
+  /*
+   * @svb
+   * Send a MIDI control-change message. 
+   * channel ranges from 0-15
+   * first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
+   * second data byte is the value to which the controller should be set, a value from 0 to 127.
+   */
   void noteControllChange(byte channel, byte controllerNumber, byte set) {
     talkMIDI( (0xB0 | channel), controllerNumber, set);
   }
   
-  // channel 0-15
-  // pressure 0-127
+  /*
+   * @svb
+   * channel 0-15
+   * pressure 0-127
+   */
   void channelPressure(byte channel, byte pressure) {
     talkMIDI( (0xD0 | channel), pressure, 0);
   }
   
-  // Send a MIDI note-on message.  Like pressing a piano key.
-  // channel ranges from 0-15
-  void noteOn(byte channel, byte note, byte attack_velocity) {
-    // Serial.print("Note on: ");
-    // Serial.println(note);
-    talkMIDI( (0x90 | channel), note, attack_velocity);
-    midi2Usb(0x90, note);
+  /*
+   * @svb
+   * 
+   */
+  void setVolume(byte volume){
+    talkMIDI(0xB0, 0x07, volume);
   }
-  
-  // Send a MIDI note-off message.  Like releasing a piano key.
-  void noteOff(byte channel, byte note, byte release_velocity) {
-    // Serial.print("Note off: ");
-    // Serial.println(note);
-    talkMIDI( (0x80 | channel), note, release_velocity);
-    midi2Usb(0x80, note);
-  }
-  
-  // channel 0-15
-  // note number 0-127 (where 127 is the most pressure)
-  // pressure amount, a value from 0 to 127
-  void afterTouch(byte channel, byte note, byte release_velocity) {
-    talkMIDI( (0xA0 | channel), note, release_velocity);
-  }
-  
+
   // Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,
   // or that data values are less than 127.
   void talkMIDI(byte cmd, byte data1, byte data2) {
-    SoftwareSerial mySerial(12, 10); // TODO refactor - private variable
-    mySerial.begin(31250);
-
-    mySerial.write(cmd);
-    mySerial.write(data1);
+    mySerial->write(cmd);
+    mySerial->write(data1);
   
     // Some commands only have one data byte. All cmds less than 0xBn have 2 data bytes
     // (sort of: http://253.ccarh.org/handout/midiprotocol/)
     if ( (cmd & 0xF0) <= 0xB0)
-      mySerial.write(data2);
+      mySerial->write(data2);
   
   }
 
@@ -146,7 +211,7 @@ class MyMidi {
   }
   
   void midi2Usb(byte type, byte note){
-    e.m1 = type; // noteOn / noteOff
+    e.m1 = type; // noteOn / noteOff / pressure
     e.m2 = note; // note value
     MIDIUSB.write(e);
 
@@ -160,8 +225,7 @@ class MyMidi {
   
   void setupMidi() {
     // Setup soft serial for MIDI control
-    SoftwareSerial mySerial(12, 10); // TODO refactor - private variable
-    mySerial.begin(31250);
+    mySerial->begin(31250);
 
     Wire.begin();
   
@@ -174,8 +238,8 @@ class MyMidi {
   
   
     // Volume - don't comment out this code!
-    talkMIDI(0xB0, 0x07, 127); //0xB0 is channel message, set channel volume to max (127)
-  
+    setVolume(127); //0xB0 is channel message, set channel volume to max (127)
+    
     // ---------------------------------------------------------------------------------------------------------
     // Melodic Instruments GM1
     // ---------------------------------------------------------------------------------------------------------

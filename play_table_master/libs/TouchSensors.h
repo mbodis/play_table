@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 class TouchSensors{
+  
   #define LOW_DIFF 0
   #define HIGH_DIFF 50
   #define filterWeight 0.3f // 0.0f to 1.0f - higher value = more smoothing
