@@ -192,10 +192,12 @@ class TableSensor {
               mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
             }
 
-            // note pressure
+            // note pressure - disabled
+            /*
             if (noteIsOnMulti[note] == 1){
               mMyMidi.afterTouch(0, notesValueMulti[note], pressure);
             }
+            */
          }
           
         break;
@@ -263,12 +265,14 @@ class TableSensor {
                 }   
               }
 
-              // note pressure
+              // note pressure - disabled
+              /*
               if (noteIsOnAcordMulti[acord] == 1){
                 for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
                   mMyMidi.afterTouch(0, noteValueAcordMulti[acord][note], pressure);
                 }
               }
+              */
            }
         break;
       }
