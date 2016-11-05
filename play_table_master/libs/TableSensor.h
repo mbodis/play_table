@@ -27,9 +27,9 @@ class TableSensor {
     byte THRESHOLD_COUNT_MULTI;
     byte NOTES_THRESHOLD_LEVEL_MULTI[10];// 10==max we don't use all of them
     // bool arr to know what note is on
-    byte noteIsOnMulti[5];// 5==max we don't use all of them
+    byte noteIsOnMulti[10];// 5==max we don't use all of them
     // current selected note setup
-    byte notesValueMulti[5];// 5==max we don't use all of them
+    byte notesValueMulti[10];// 5==max we don't use all of them
 
     /*
      * acord
@@ -39,17 +39,18 @@ class TableSensor {
     // to know if note is on
     byte noteIsOnAcord = 0;
     // current selected note setup
-    byte noteValueAcord[5];// 5==max we don't use all of them
+    byte noteValueAcord[6];// 6==max we don't use all of them
    
     /*
      * multi acord
      * plays multiple tones based on distance from sensor
      */     
     byte NOTES_COUNT_ACORD_MULTI;
+    byte ACORD_COUNT_ACORD_MULTI;
     byte THRESHOLD_COUNT_ACORD_MULTI;
     byte NOTES_THRESHOLD_LEVEL_ACORD_MULTI[10];
-    byte noteIsOnAcordMulti[5];// 10 ==max we don't use all of them
-    byte noteValueAcordMulti[5][4];// 10 4==max we don't use all of them
+    byte noteIsOnAcordMulti[5];// 5==max we don't use all of them
+    byte noteValueAcordMulti[5][5];// 5==max we don't use all of them
 
     /*
      * toggle note setup helper for visualization
@@ -72,12 +73,28 @@ class TableSensor {
       mode = newMode;
     }
 
+    /*
+     * id <byte> - id of a sensor
+     * noteValue <byte> - sensor single tone note value
+     */
     void setupSingle(byte id, byte noteValue){
       sensorId = id;
       mode = TONE_MODE_SINGLE;
       noteValueSingle = noteValue;
     }
 
+    /*
+     * id <byte> - id of a sensor
+     * notesSize <byte> - number of notes
+     * notesArr <byte[]> - sensor multi - note values 
+     * threshSize <byte> - size of threshold array 
+     * thresholdArr <byte[]> - threshold values 
+     *
+     * NOTE: threshold example: {20, 60, 120} -> 
+     *  thhreshold level 1: <20-60>     
+     *  thhreshold level 2: <60-120>     
+     *  thhreshold level 3: <120,999>     
+     */
     void setupMulti(byte id, byte notesSize, byte notesArr[], byte threshSize, byte thresholdArr[]){
       sensorId = id;
       mode = TONE_MODE_MULTI;
@@ -95,6 +112,12 @@ class TableSensor {
 
     }  
 
+    /*
+     * id <byte> - id of a sensor
+     * notesSize <byte> - number of notes that are played at same time
+     * notesArr <byte[]> - array of note values      
+     *
+     */
     void setupAcord(byte id, byte notesSize, byte notesArr[]){
       sensorId = id;
       mode = TONE_MODE_ACORD;
@@ -105,16 +128,31 @@ class TableSensor {
       }
     }
     
-    void setupAcordMulti(byte id, byte notesSize, byte notesArr[3][4], byte threshSize, byte thresholdArr[]){
+    /*
+     * id <byte> - id of a sensor
+     * notesSize <byte> - number of notes that are played at same time
+     * notesArr <byte[][]> - array of note values
+     * threshSize <byte> - size of threshold array 
+     * thresholdArr <byte[]> - threshold values 
+     *
+     * NOTE: if you want to play less notes just duplicate the value
+     * NOTE: threshold example: {20, 60, 120} -> 
+     *  thhreshold level 1: <20-60>     
+     *  thhreshold level 2: <60-120>     
+     *  thhreshold level 3: <120,999>     
+     */
+    template< size_t N > 
+    void setupAcordMulti(byte id, byte acordCount, byte notesSize, byte notesArr[N][N], byte threshSize, byte thresholdArr[]){
       sensorId = id;
       mode = TONE_MODE_MULTI_ACORD;
-      
+      ACORD_COUNT_ACORD_MULTI = acordCount;
       NOTES_COUNT_ACORD_MULTI = notesSize;
-      for (byte i=0; i<3; i++){
+      
+      for (byte i=0; i<ACORD_COUNT_ACORD_MULTI; i++){
 
         noteIsOnAcordMulti[i] = 0; // acord is default off
         
-        for (byte j=0; j<4; j++){
+        for (byte j=0; j<NOTES_COUNT_ACORD_MULTI; j++){
           noteValueAcordMulti[i][j] = notesArr[i][j];
         }
       }
@@ -128,11 +166,11 @@ class TableSensor {
     
     /*
      *
-     * int thresholdRaw <0 - 50>
+     * byte thresholdRaw <0 - 50>
      * byte thresholdFiltered <2-255>
      */
-    void playNote(MyMidi &mMyMidi, int thresholdRaw, byte thresholdFiltered){
-      
+    void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered){
+    
       byte pressure = thresholdFiltered/1.5;
       if (pressure > 127){
         pressure = 127;
@@ -166,6 +204,8 @@ class TableSensor {
       
             // loop through thresholh values
             for (byte th = 0; th < THRESHOLD_COUNT_MULTI; th++) {
+             
+              
               if (note == th){
                 // threhold in middle
                 if (th+1 < NOTES_COUNT_MULTI){
@@ -180,6 +220,7 @@ class TableSensor {
                 }
               }
             }
+            
         
             // note ON
             if (noteIsOnMulti[note] == 0 && inRange) {
@@ -192,12 +233,8 @@ class TableSensor {
               mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
             }
 
-            // note pressure - disabled
-            /*
-            if (noteIsOnMulti[note] == 1){
-              mMyMidi.afterTouch(0, notesValueMulti[note], pressure);
-            }
-            */
+            // note pressure - disabled, because tones are changing by distance
+
          }
           
         break;
@@ -230,7 +267,7 @@ class TableSensor {
 
 
         case TONE_MODE_MULTI_ACORD:     
-          for (byte acord = 0; acord < NOTES_COUNT_ACORD_MULTI; acord++) {
+          for (byte acord = 0; acord < ACORD_COUNT_ACORD_MULTI; acord++) {
               bool inRange = false;
         
               // loop through thresholh values
@@ -244,7 +281,7 @@ class TableSensor {
                   // last threshold    
                   }else{                  
                     if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th]){
-                      inRange = false;
+                      inRange = true;
                     }
                   }
                 }
@@ -265,14 +302,7 @@ class TableSensor {
                 }   
               }
 
-              // note pressure - disabled
-              /*
-              if (noteIsOnAcordMulti[acord] == 1){
-                for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
-                  mMyMidi.afterTouch(0, noteValueAcordMulti[acord][note], pressure);
-                }
-              }
-              */
+              // note pressure - disabled, because tones are changing by distance
            }
         break;
       }
@@ -314,7 +344,7 @@ class TableSensor {
     }
 
     /*
-     toggle note setup helper for visualization method
+     * toggle note setup helper for visualization method
      */
     void incVisualLedHelper(byte inc){
       visualLedsHelper += inc;
