@@ -143,7 +143,7 @@ class MyMidi {
   void noteOn(byte channel, byte note, byte attack_velocity) {
       addNoteToPlayList(note);
       talkMIDI( (0x90 | channel), note, attack_velocity);
-      midi2Usb(0x90, note);
+      midi2Usb(0x09, 0x90, note, attack_velocity);
   }
   
   /*
@@ -153,7 +153,7 @@ class MyMidi {
     removeNoteFromPlayList(note);
     if (!isNoteOnPlayList(note)){
       talkMIDI( (0x80 | channel), note, release_velocity);
-      midi2Usb(0x80, note);
+      midi2Usb(0x08, 0x80, note, release_velocity);
     }
   }
   
@@ -162,9 +162,11 @@ class MyMidi {
    * channel 0-15
    * note a value from 0 to 127
    * pressure amount 0-127 (where 127 is the most pressure)
+   *
+   * NOTE: touchboard si not supporting afterTouch
    */ 
   void afterTouch(byte channel, byte note, byte pressure) {
-    // midi2Usb(0xA0, note); // TODO pressure ?
+      midi2Usb(0x0A, 0xA0, note, pressure);
   }
 
   /*
@@ -217,9 +219,13 @@ class MyMidi {
     e.m3 = 127; // max volume
   }
   
-  void midi2Usb(byte type, byte note){
-    e.m1 = type; // noteOn / noteOff / pressure
+  void midi2Usb(byte type, byte command, byte note, byte data){
+    e.type = type; // 
+    e.m1 = command; // noteOn / noteOff / pressure
     e.m2 = note; // note value
+    if (data != 0){
+      e.m3 = data; // data      
+    }
     MIDIUSB.write(e);
 
     // flush USB buffer to ensure all notes are sent
