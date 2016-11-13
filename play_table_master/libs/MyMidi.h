@@ -62,7 +62,7 @@
   32  Square Click               48  High Mid Tom              64  Low Conga             80  Mute Triangle [EXC 5]
   33  Metronome Click            49  Crash Cymbal 1            65  High Timbale          81  Open Triangle [EXC 5]
   34  Metronome Bell             50  High Tom                  66  Low Timbale           82  Shaker
-  35  Acoustic Bass Drum         51  Ride Cymbal 1             67  High Agogo            83 Jingle bell
+  35  Acoustic Bass Drum         51  Ride Cymbal 1             67  High Agogo            83  Jingle bell
   36  Bass Drum 1                52  Chinese Cymbal            68  Low Agogo             84  Bell tree
   37  Side Stick                 53  Ride Bell                 69  Casbasa               85  Castanets
   38  Acoustic Snare             54  Tambourine                70  Maracas               86  Mute Surdo [EXC 6]
@@ -73,6 +73,10 @@
 
 */
 
+
+/*
+  some more docs: https://github.com/rkistner/arcore
+ */
 class MyMidi {
 
   private:
@@ -160,8 +164,7 @@ class MyMidi {
    * pressure amount 0-127 (where 127 is the most pressure)
    */ 
   void afterTouch(byte channel, byte note, byte pressure) {
-    talkMIDI( (0xA0 | channel), note, pressure);
-    midi2Usb(0xA0, note);
+    // midi2Usb(0xA0, note); // TODO pressure ?
   }
 
   /*
@@ -170,6 +173,8 @@ class MyMidi {
    * channel ranges from 0-15
    * first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
    * second data byte is the value to which the controller should be set, a value from 0 to 127.
+   * 
+   * note: not used
    */
   void noteControllChange(byte channel, byte controllerNumber, byte set) {
     talkMIDI( (0xB0 | channel), controllerNumber, set);
@@ -179,6 +184,8 @@ class MyMidi {
    * @svb
    * channel 0-15
    * pressure 0-127
+   * 
+   * note: not used
    */
   void channelPressure(byte channel, byte pressure) {
     talkMIDI( (0xD0 | channel), pressure, 0);
@@ -218,11 +225,12 @@ class MyMidi {
     // flush USB buffer to ensure all notes are sent
     MIDIUSB.flush();
   }
-  
-  // SETTING UP THE INSTRUMENT:
-  // The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
-  // below to aid you in selecting your desire instrument from within the respective instrument bank
-  
+
+  /*
+   * SETTING UP THE INSTRUMENT:
+   * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
+   * below to aid you in selecting your desire instrument from within the respective instrument bank
+   */
   void setupMidi() {
     // Setup soft serial for MIDI control
     mySerial->begin(31250);
@@ -236,27 +244,39 @@ class MyMidi {
     digitalWrite(resetMIDI, HIGH);
     delay(100);
   
+    // set Volume
+    setVolume(127);    
+    // Bank select: Default bank GM1
+    talkMIDI(0xB0, 0, 0x00); 
+    // Set instrument number. 79 == Whistle
+    talkMIDI(0xC0, 79, 0); 
+  }
+
+
+  /*
+   * SETTING UP THE INSTRUMENT:
+   * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
+   * below to aid you in selecting your desire instrument from within the respective instrument bank
+   */
+  void setupMidiPercussion() {
+    // Setup soft serial for MIDI control
+    mySerial->begin(31250);
+
+    Wire.begin();
   
-    // Volume - don't comment out this code!
+    // Reset the VS1053
+    pinMode(resetMIDI, OUTPUT);
+    digitalWrite(resetMIDI, LOW);
+    delay(100);
+    digitalWrite(resetMIDI, HIGH);
+    delay(100);
+  
+    // set volume - don't comment out this code!
     setVolume(127); //0xB0 is channel message, set channel volume to max (127)
-    
-    // ---------------------------------------------------------------------------------------------------------
-    // Melodic Instruments GM1
-    // ---------------------------------------------------------------------------------------------------------
-    // To Play "Electric Piano" (5):
-    talkMIDI(0xB0, 0, 0x00); // Default bank GM1
-    // We change the instrument by changing the middle number in the brackets
-    // talkMIDI(0xC0, number, 0); "number" can be any number from the melodic table below
-    byte INSTRUMENT_TYPE = 79;
-    talkMIDI(0xC0, INSTRUMENT_TYPE, 0); // Set instrument number. 0xC0 is a 1 data byte command(55,0)
-    // ---------------------------------------------------------------------------------------------------------
-    // Percussion Instruments (Drums, GM1 + GM2)
-    // ---------------------------------------------------------------------------------------------------------
-    // uncomment the two lines of code below to use - you will also need to comment out the two "talkMIDI" lines
-    // of code in the Melodic Instruments section above
-    // talkMIDI(0xB0, 0, 0x78); // Bank select: drums
-    // talkMIDI(0xC0, 0, 0); // Set a dummy instrument number
-    // ---------------------------------------------------------------------------------------------------------
+    // Bank select: Percussion Instruments (Drums, GM1 + GM2)
+    talkMIDI(0xB0, 0, 0x78); 
+    // Set a dummy instrument number
+    talkMIDI(0xC0, 0, 36); 
   }
   
 

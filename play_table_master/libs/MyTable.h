@@ -87,7 +87,7 @@ class MyTable {
       }
     }
 
-    mNoteSetup.setupNotes(newNoteSetupIdx);
+    mNoteSetup.setupNotes(newNoteSetupIdx, mMyMidi);
   }
   
   /*
@@ -204,9 +204,10 @@ class MyTable {
         }
 
         /*
-         * MULTI TONE
+         * MULTI TONE, ARPEGGIO
          */
-        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI){
+        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI
+          || mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_ARPEGGIO){
           mNoteSetup.mTableSensors[sensor].incVisualLedHelper(9);                              
           sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor].visualLedsHelper);
         }

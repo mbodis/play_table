@@ -16,41 +16,50 @@ class TableSensor {
      * single
      * play single tones anytime sensor range is reached
      */ 
-    byte noteIsOnSingle = 0;
+    bool noteIsOnSingle = false;
     byte noteValueSingle = 0;
 
     /*
      * multi
      * plays one tone based on distance from sensor
      */ 
-    byte NOTES_COUNT_MULTI;
-    byte THRESHOLD_COUNT_MULTI;
-    byte NOTES_THRESHOLD_LEVEL_MULTI[10];// 10==max we don't use all of them
     // bool arr to know what note is on
-    byte noteIsOnMulti[10];// 5==max we don't use all of them
+    bool noteIsOnMulti[18];
     // current selected note setup
-    byte notesValueMulti[10];// 5==max we don't use all of them
+    byte notesValueMulti[18];
 
     /*
      * acord
      * play multiple tones anytime sensor range is reached
      */     
-    byte NOTES_COUNT_ACORD;
     // to know if note is on
-    byte noteIsOnAcord = 0;
+    bool noteIsOnAcord = false;
     // current selected note setup
-    byte noteValueAcord[6];// 6==max we don't use all of them
+    byte noteValueAcord[6];
    
     /*
      * multi acord
      * plays multiple tones based on distance from sensor
      */     
-    byte NOTES_COUNT_ACORD_MULTI;
     byte ACORD_COUNT_ACORD_MULTI;
-    byte THRESHOLD_COUNT_ACORD_MULTI;
-    byte NOTES_THRESHOLD_LEVEL_ACORD_MULTI[10];
-    byte noteIsOnAcordMulti[5];// 5==max we don't use all of them
-    byte noteValueAcordMulti[5][5];// 5==max we don't use all of them
+    bool noteIsOnAcordMulti[4];
+    byte noteValueAcordMulti[4][6];
+
+    /*
+     * arpeggio
+     * toggle between tones, increase tempo by distance
+     */   
+    // arpeggio counter
+    byte arpCount = 0;
+    // bool noteIsOnMulti[18]; // for memory limits uses vars from multi
+    // byte notesValueMulti[18]; // for memory limits uses vars from multi
+
+    /*
+     * multi, multi acord
+     */
+    byte NOTES_COUNT;
+    byte THRESHOLD_COUNT;
+    byte NOTES_THRESHOLD_LEVEL[18];
 
     /*
      * toggle note setup helper for visualization
@@ -81,6 +90,7 @@ class TableSensor {
       sensorId = id;
       mode = TONE_MODE_SINGLE;
       noteValueSingle = noteValue;
+      noteIsOnSingle = false;
     }
 
     /*
@@ -99,15 +109,15 @@ class TableSensor {
       sensorId = id;
       mode = TONE_MODE_MULTI;
 
-      NOTES_COUNT_MULTI = notesSize;       
-      for (byte i=0; i<NOTES_COUNT_MULTI; i++){
+      NOTES_COUNT = notesSize;       
+      for (byte i=0; i<NOTES_COUNT; i++){
         notesValueMulti[i] = notesArr[i];
-        noteIsOnMulti[i] = 0;      
+        noteIsOnMulti[i] = false;      
       }
 
-      THRESHOLD_COUNT_MULTI = threshSize;
-      for (byte i=0; i<THRESHOLD_COUNT_MULTI; i++){
-        NOTES_THRESHOLD_LEVEL_MULTI[i] = thresholdArr[i];     
+      THRESHOLD_COUNT = threshSize;
+      for (byte i=0; i<THRESHOLD_COUNT; i++){
+        NOTES_THRESHOLD_LEVEL[i] = thresholdArr[i];     
       }
 
     }  
@@ -122,8 +132,9 @@ class TableSensor {
       sensorId = id;
       mode = TONE_MODE_ACORD;
       
-      NOTES_COUNT_ACORD = notesSize;       
-      for (byte i=0; i<NOTES_COUNT_ACORD; i++){
+      noteIsOnAcord = false;
+      NOTES_COUNT = notesSize;       
+      for (byte i=0; i<NOTES_COUNT; i++){
         noteValueAcord[i] = notesArr[i];
       }
     }
@@ -146,22 +157,40 @@ class TableSensor {
       sensorId = id;
       mode = TONE_MODE_MULTI_ACORD;
       ACORD_COUNT_ACORD_MULTI = acordCount;
-      NOTES_COUNT_ACORD_MULTI = notesSize;
+      NOTES_COUNT = notesSize;
       
       for (byte i=0; i<ACORD_COUNT_ACORD_MULTI; i++){
 
-        noteIsOnAcordMulti[i] = 0; // acord is default off
+        noteIsOnAcordMulti[i] = false; // acord is default off
         
-        for (byte j=0; j<NOTES_COUNT_ACORD_MULTI; j++){
+        for (byte j=0; j<NOTES_COUNT; j++){
           noteValueAcordMulti[i][j] = notesArr[i][j];
         }
       }
 
-      THRESHOLD_COUNT_ACORD_MULTI = threshSize;
-      for (byte i=0; i<THRESHOLD_COUNT_ACORD_MULTI; i++){
-        NOTES_THRESHOLD_LEVEL_ACORD_MULTI[i] = thresholdArr[i];
+      THRESHOLD_COUNT = threshSize;
+      for (byte i=0; i<THRESHOLD_COUNT; i++){
+        NOTES_THRESHOLD_LEVEL[i] = thresholdArr[i];
       }
       
+    }
+
+    /*
+     * id <byte> - id of a sensor
+     * notesSize <byte> - number of notes that are played at same time
+     * notesArr <byte[]> - array of note values      
+     *
+     */
+    void setupArpeggio(byte id, byte notesSize, byte notesArr[]){
+      sensorId = id;
+      mode = TONE_MODE_ARPEGGIO;
+      
+      NOTES_COUNT = notesSize;       
+      for (byte i=0; i<NOTES_COUNT; i++){
+        notesValueMulti[i] = notesArr[i];
+        noteIsOnMulti[i] = false;  
+      }
+
     }
     
     /*
@@ -181,13 +210,13 @@ class TableSensor {
 
         case TONE_MODE_SINGLE:
           // note ON
-          if (noteIsOnSingle == 0 && thresholdRaw > 2) {
-            noteIsOnSingle = 1;
+          if (noteIsOnSingle == false && thresholdRaw > 2) {
+            noteIsOnSingle = true;
             mMyMidi.noteOn(0, noteValueSingle, mMyMidi.velocity);
         
           // note OFF  
-          } else if (noteIsOnSingle == 1 && thresholdRaw < 2) {
-            noteIsOnSingle = 0;
+          } else if (noteIsOnSingle == true && thresholdRaw < 2) {
+            noteIsOnSingle = false;
             mMyMidi.noteOff(0, noteValueSingle, mMyMidi.velocity);    
           }
 
@@ -199,22 +228,22 @@ class TableSensor {
 
 
         case TONE_MODE_MULTI:
-          for (byte note = 0; note < NOTES_COUNT_MULTI; note++) {
+          for (byte note = 0; note < NOTES_COUNT; note++) {
             bool inRange = false;
       
             // loop through thresholh values
-            for (byte th = 0; th < THRESHOLD_COUNT_MULTI; th++) {
+            for (byte th = 0; th < THRESHOLD_COUNT; th++) {
              
               
               if (note == th){
                 // threhold in middle
-                if (th+1 < NOTES_COUNT_MULTI){
-                    if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_MULTI[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL_MULTI[th+1]){
+                if (th+1 < NOTES_COUNT){
+                    if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL[th+1]){
                       inRange = true;
                     }
                 // last threshold    
                 }else{
-                  if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_MULTI[th]){
+                  if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL[th]){
                     inRange = true;
                   }
                 }
@@ -223,13 +252,13 @@ class TableSensor {
             
         
             // note ON
-            if (noteIsOnMulti[note] == 0 && inRange) {
-              noteIsOnMulti[note] = 1;
+            if (noteIsOnMulti[note] == false && inRange) {
+              noteIsOnMulti[note] = true;
               mMyMidi.noteOn(0, notesValueMulti[note], mMyMidi.velocity);
           
             // note OFF  
-            } else if (noteIsOnMulti[note] == 1 && !inRange) {
-              noteIsOnMulti[note] = 0;            
+            } else if (noteIsOnMulti[note] == true && !inRange) {
+              noteIsOnMulti[note] = false;            
               mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
             }
 
@@ -242,23 +271,23 @@ class TableSensor {
 
         case TONE_MODE_ACORD:     
           // note ON
-          if (noteIsOnAcord == 0 && thresholdRaw > 2) {         
-              noteIsOnAcord = 1;
-              for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+          if (noteIsOnAcord == false && thresholdRaw > 2) {         
+              noteIsOnAcord = true;
+              for (byte note = 0; note < NOTES_COUNT; note++) {
                 mMyMidi.noteOn(0, noteValueAcord[note], mMyMidi.velocity);      
               }
         
           // note OFF  
-          } else if (noteIsOnAcord == 1 && thresholdRaw < 2) {
-              noteIsOnAcord = 0;      
-              for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+          } else if (noteIsOnAcord == true && thresholdRaw < 2) {
+              noteIsOnAcord = false;      
+              for (byte note = 0; note < NOTES_COUNT; note++) {
                 mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
               }
           }
 
           // note pressure
-          if (noteIsOnAcord == 1){
-            for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+          if (noteIsOnAcord == true){
+            for (byte note = 0; note < NOTES_COUNT; note++) {
               mMyMidi.afterTouch(0, noteValueAcord[note], pressure);
             }
           }
@@ -271,16 +300,16 @@ class TableSensor {
               bool inRange = false;
         
               // loop through thresholh values
-              for (byte th = 0; th < THRESHOLD_COUNT_ACORD_MULTI; th++) {
+              for (byte th = 0; th < THRESHOLD_COUNT; th++) {
                 if (acord == th){
                   // threhold in middle
-                  if (th+1 < THRESHOLD_COUNT_ACORD_MULTI){
-                      if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th+1]){
+                  if (th+1 < THRESHOLD_COUNT){
+                      if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL[th] && thresholdFiltered < NOTES_THRESHOLD_LEVEL[th+1]){
                         inRange = true;
                       }
                   // last threshold    
                   }else{                  
-                    if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL_ACORD_MULTI[th]){
+                    if (thresholdFiltered >= NOTES_THRESHOLD_LEVEL[th]){
                       inRange = true;
                     }
                   }
@@ -288,22 +317,56 @@ class TableSensor {
               }
           
               // note ON
-              if (noteIsOnAcordMulti[acord] == 0 && inRange) {
-                noteIsOnAcordMulti[acord] = 1;
-                for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+              if (noteIsOnAcordMulti[acord] == false && inRange) {
+                noteIsOnAcordMulti[acord] = true;
+                for (byte note = 0; note < NOTES_COUNT; note++) {
                   mMyMidi.noteOn(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
                 }              
             
               // note OFF  
-              } else if (noteIsOnAcordMulti[acord] == 1 && !inRange) {
-                noteIsOnAcordMulti[acord] = 0;                          
-                for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+              } else if (noteIsOnAcordMulti[acord] == true && !inRange) {
+                noteIsOnAcordMulti[acord] = false;                          
+                for (byte note = 0; note < NOTES_COUNT; note++) {
                   mMyMidi.noteOff(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
                 }   
               }
 
               // note pressure - disabled, because tones are changing by distance
            }
+        break;
+
+        case TONE_MODE_ARPEGGIO:
+
+          for (byte note = 0; note < NOTES_COUNT; note++) {
+            bool inRange = false;            
+
+            if (thresholdFiltered > 240) inRange = true;
+
+            if (thresholdRaw > 2){
+              if (arpCount > note*255/NOTES_COUNT && arpCount<255){
+                  inRange = true;
+              }
+            }
+        
+            // note ON
+            if (noteIsOnMulti[note] == false && inRange) {             
+              noteIsOnMulti[note] = true;
+              mMyMidi.noteOn(0, notesValueMulti[note], mMyMidi.velocity);
+          
+            // note OFF  
+            } else if (noteIsOnMulti[note] == true && !inRange) {               
+              noteIsOnMulti[note] = false;            
+              mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
+            }
+
+            // note pressure - disabled, because tones are changing by distance
+          }
+ 
+          arpCount += thresholdFiltered/10;
+          if (arpCount == 255){
+            arpCount = 0;
+          }
+          
         break;
       }
     }
@@ -317,27 +380,34 @@ class TableSensor {
         break;
 
         case TONE_MODE_MULTI:
-          for (byte note = 0; note < NOTES_COUNT_MULTI; note++) {
-            noteIsOnMulti[note] = 0;            
+          for (byte note = 0; note < NOTES_COUNT; note++) {
+            noteIsOnMulti[note] = false;            
             mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
           }
         break;
 
         case TONE_MODE_ACORD:
-          for (byte note = 0; note < NOTES_COUNT_ACORD; note++) {
+          for (byte note = 0; note < NOTES_COUNT; note++) {
             mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
           }
-          noteIsOnAcord = 0;
+          noteIsOnAcord = false;
         break;
 
         case TONE_MODE_MULTI_ACORD:
-          for (byte acord = 0; acord < NOTES_COUNT_ACORD_MULTI; acord++) {
+          for (byte acord = 0; acord < NOTES_COUNT; acord++) {
             
-            noteIsOnAcordMulti[acord] = 0;
+            noteIsOnAcordMulti[acord] = false;
             
-            for (byte note = 0; note < NOTES_COUNT_ACORD_MULTI; note++) {
+            for (byte note = 0; note < NOTES_COUNT; note++) {
               mMyMidi.noteOff(0, noteValueAcordMulti[acord][note], mMyMidi.velocity);         
             }  
+          }
+        break;
+
+        case TONE_MODE_ARPEGGIO:
+          for (byte note = 0; note < NOTES_COUNT; note++) {
+            noteIsOnMulti[note] = false;            
+            mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
           }
         break;
       }    
