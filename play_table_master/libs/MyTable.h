@@ -20,11 +20,11 @@ class MyTable {
   #define PROTOCOL_VALUE_DELIMETER 1
 
   private:
-    const int buttonPin = 13;
-    int buttonState = LOW;    
+    const byte buttonPin = 13;
+    byte buttonState = LOW;    
   
   public:
-  	int noteSetupSelectedIdx = -1;
+  	byte noteSetupSelectedIdx = -1;
     float electrodeLastValueRaw[ELECTRODES_COUNT] = { 0, 0, 0, 0, 0, 0, 0}; // 0 - 50
     int electrodeLastValues[ELECTRODES_COUNT] = {0,0,0,0,0,0,0}; // 2-255
 

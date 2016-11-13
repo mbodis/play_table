@@ -51,6 +51,7 @@ class TableSensor {
      */   
     // arpeggio counter
     byte arpCount = 0;
+    bool arpeggioSingleMode = false;
     // bool noteIsOnMulti[18]; // for memory limits uses vars from multi
     // byte notesValueMulti[18]; // for memory limits uses vars from multi
 
@@ -181,10 +182,11 @@ class TableSensor {
      * notesArr <byte[]> - array of note values      
      *
      */
-    void setupArpeggio(byte id, byte notesSize, byte notesArr[]){
+    void setupArpeggio(byte id, byte notesSize, byte notesArr[], bool singleToneMode){
       sensorId = id;
       mode = TONE_MODE_ARPEGGIO;
       
+      arpeggioSingleMode = singleToneMode;
       NOTES_COUNT = notesSize;       
       for (byte i=0; i<NOTES_COUNT; i++){
         notesValueMulti[i] = notesArr[i];
@@ -343,9 +345,21 @@ class TableSensor {
             if (thresholdFiltered > 240) inRange = true;
 
             if (thresholdRaw > 2){
-              if (arpCount > note*255/NOTES_COUNT && arpCount<255){
-                  inRange = true;
+
+              // play only one note at time
+              if (arpeggioSingleMode == true){
+                if ((arpCount > (note*(255/NOTES_COUNT))) 
+                  && (arpCount < ((note+1)*(255/NOTES_COUNT))) ){
+                    inRange = true;
+                }
+
+              // play more notes at time
+              }else{
+                if (arpCount > note*255/NOTES_COUNT && arpCount<255){
+                    inRange = true;
+                }                
               }
+
             }
         
             // note ON
@@ -358,11 +372,14 @@ class TableSensor {
               noteIsOnMulti[note] = false;            
               mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
             }
-
             // note pressure - disabled, because tones are changing by distance
           }
- 
+  
+          if (thresholdRaw <= 2 ) 
+            arpCount = 0;
+          
           arpCount += thresholdFiltered/10;
+          
           if (arpCount == 255){
             arpCount = 0;
           }

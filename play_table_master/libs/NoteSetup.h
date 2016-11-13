@@ -255,8 +255,12 @@ class NoteSetup {
 
   	void testSetupArpeggio(){
   		byte ID = 0;
+		byte arr_0[] = {50, 62, 63, 66, 69};
+		mTableSensors[ID].setupArpeggio(ID, 5, arr_0, true);
+
+		ID = 1;
 		byte arr_1[] = {50, 62, 63, 66, 69};
-		mTableSensors[ID].setupArpeggio(ID, 5, arr_1);
+		mTableSensors[ID].setupArpeggio(ID, 5, arr_1, false);
   		
 	    ID = 1; // not set
 	    ID = 2; // not set
