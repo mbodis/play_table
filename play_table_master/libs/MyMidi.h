@@ -139,6 +139,7 @@ class MyMidi {
   /*
    * Send a MIDI note-on message.  Like pressing a piano key.
    * channel ranges from 0-15
+   * attack_velocity <1-127>
    */
   void noteOn(byte channel, byte note, byte attack_velocity) {
       addNoteToPlayList(note);
@@ -148,6 +149,7 @@ class MyMidi {
   
   /*
    * Send a MIDI note-off message.  Like releasing a piano key.
+   * attack_velocity <1-127>
    */
   void noteOff(byte channel, byte note, byte release_velocity) {
     removeNoteFromPlayList(note);

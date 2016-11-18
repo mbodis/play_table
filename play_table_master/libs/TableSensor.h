@@ -42,8 +42,8 @@ class TableSensor {
      * plays multiple tones based on distance from sensor
      */     
     byte ACORD_COUNT_ACORD_MULTI;
-    bool noteIsOnAcordMulti[4];
-    byte noteValueAcordMulti[4][6];
+    bool noteIsOnAcordMulti[3];
+    byte noteValueAcordMulti[3][6];
 
     /*
      * arpeggio
@@ -378,7 +378,8 @@ class TableSensor {
           if (thresholdRaw <= 2 ) 
             arpCount = 0;
           
-          arpCount += thresholdFiltered/10;
+          // "thresholdFiltered/10" is increasing faster than "thresholdFiltered/20"
+          arpCount += thresholdFiltered/40;
           
           if (arpCount == 255){
             arpCount = 0;

@@ -24,13 +24,17 @@ class NoteSetup {
 
 			case 2:
 			mMyMidi.setupMidi();
-			// noteSetup_3_D_mol();
-			testSetupArpeggio();
+			noteSetup_3_D_mol();
 			break;      
 
 			case 3:
+			mMyMidi.setupMidi();
+			noteSetup_4_Arpeggio();
+			break; 
+
+			case 4:
 			mMyMidi.setupMidiPercussion();
-			noteSetup_4_Drumm();
+			noteSetup_5_Drumm();
 			break;      
 		}
   	}
@@ -118,7 +122,33 @@ class NoteSetup {
   		mTableSensors[ID].setupSingle(ID, 74);
   	}
   	
-  	void noteSetup_4_Drumm(){
+  	void noteSetup_4_Arpeggio(){
+  		byte ID = 0;
+		byte arr_0[] = {53, 57, 60, 64, 65, 69, 72, 76, 72, 69, 65, 64, 60, 57};
+		mTableSensors[ID].setupArpeggio(ID, 14, arr_0, true);
+
+		ID = 1;
+		byte arr_1[] = {58, 62, 65, 69, 70, 74, 77, 81, 77, 74, 70, 69, 65, 62};
+		mTableSensors[ID].setupArpeggio(ID, 14, arr_1, true);
+
+		ID = 2;
+		byte arr_2[] = {56, 60, 63, 67, 68, 72, 75, 79, 75, 72, 68, 67, 63, 60};
+		mTableSensors[ID].setupArpeggio(ID, 14, arr_2, true);
+
+		ID = 3;
+  		mTableSensors[ID].setupSingle(ID, 84);
+		
+		ID = 4;
+  		mTableSensors[ID].setupSingle(ID, 79);
+		
+		ID = 5;
+  		mTableSensors[ID].setupSingle(ID, 77);
+		
+		ID = 6;
+  		mTableSensors[ID].setupSingle(ID, 72);
+  	}
+
+  	void noteSetup_5_Drumm(){
   		byte ID = 0;
 		mTableSensors[ID].setupSingle(ID, 49);
 

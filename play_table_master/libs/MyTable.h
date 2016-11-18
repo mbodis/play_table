@@ -104,8 +104,10 @@ class MyTable {
       newNotesIdx = 1;
     }else if (v > 508 && v < 688){
       newNotesIdx = 2;
-    }else if ( v > 740){
+    }else if ( v > 740 && v < 800){
       newNotesIdx = 3;
+    }else if ( v > 820){
+      newNotesIdx = 4;
     }else{
       newNotesIdx = noteSetupSelectedIdx;
     }
