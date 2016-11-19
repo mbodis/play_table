@@ -37,7 +37,7 @@ class SensorMulti : public Sensor{
 	     *  thhreshold level 2: <60-120>     
 	     *  thhreshold level 3: <120,999>     
 	     */
-	    SensorMulti(byte id, byte notesCount, byte notesArr[], byte threshSize, byte thresholdArr[]):Sensor(id, TONE_MODE_MULTI){
+	    SensorMulti(byte id, byte notesCount, byte notesArr[], byte threshSize, byte thresholdArr[]):Sensor(id, TONE_MODE_MULTI, id){
 
 	      this->notesCount = notesCount;
 	      
@@ -56,7 +56,7 @@ class SensorMulti : public Sensor{
         virtual void sensorOff(MyMidi &mMyMidi){
 			for (byte note = 0; note < notesCount; note++) {
 				noteIsOn[note] = false;            
-				mMyMidi.noteOff(0, notesValue[note], mMyMidi.velocity);    
+				mMyMidi.noteOff(getChannel(), notesValue[note], mMyMidi.velocity);    
 			}
         }
         
@@ -97,12 +97,12 @@ class SensorMulti : public Sensor{
 				// note ON
 				if (noteIsOn[note] == false && inRange) {
 					noteIsOn[note] = true;
-					mMyMidi.noteOn(0, notesValue[note], mMyMidi.velocity);
+					mMyMidi.noteOn(getChannel(), notesValue[note], mMyMidi.velocity);
 
 				// note OFF  
 				} else if (noteIsOn[note] == true && !inRange) {
 					noteIsOn[note] = false;            
-					mMyMidi.noteOff(0, notesValue[note], mMyMidi.velocity);    
+					mMyMidi.noteOff(getChannel(), notesValue[note], mMyMidi.velocity);    
 				}
 
 				// note pressure - disabled, because tones are changing by distance

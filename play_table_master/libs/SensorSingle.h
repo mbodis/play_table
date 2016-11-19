@@ -21,7 +21,7 @@ class SensorSingle : public Sensor{
 	     * id <byte> - id of a sensor
 	     * noteValue <byte> - sensor single tone note value
 	     */
-  		SensorSingle(byte id, byte noteValue):Sensor(id, TONE_MODE_SINGLE){
+  		SensorSingle(byte id, byte noteValue):Sensor(id, TONE_MODE_SINGLE, id){
 	      this->noteValue = noteValue;
 	      this->noteIsOn = false;  
   		}
@@ -42,21 +42,22 @@ class SensorSingle : public Sensor{
 				pressure = 127;
 			}
 
+			setVolume(pressure);
 	      
 			// note ON
 			if (noteIsOn == false && thresholdRaw > 2) {
 				noteIsOn = true;
-				mMyMidi.noteOn(0, noteValue, mMyMidi.velocity);
+				mMyMidi.noteOn(getChannel(), noteValue, mMyMidi.velocity);
 
 			// note OFF  
 			} else if (noteIsOn == true && thresholdRaw < 2) {
 				noteIsOn = false;
-				mMyMidi.noteOff(0, noteValue, mMyMidi.velocity);    
+				mMyMidi.noteOff(getChannel(), noteValue, mMyMidi.velocity);    
 			}
 
 			// note pressure
 			if (noteIsOn){
-				mMyMidi.afterTouch(0, noteValue, pressure);
+				mMyMidi.afterTouch(getChannel(), noteValue, pressure);
 			}
 	        
         }

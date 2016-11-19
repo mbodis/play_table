@@ -44,7 +44,9 @@ class SensorMultiAcord : public Sensor{
 	     *  thhreshold level 3: <120,999>     
 	     */
 	    template< size_t N > 
-	    SensorMultiAcord(byte id, byte acordCount, byte notesCount, byte notesArr[N][N], byte threshSize, byte thresholdArr[]):Sensor(id, TONE_MODE_MULTI_ACORD){
+	    SensorMultiAcord(byte id, byte acordCount, byte notesCount, byte notesArr[N][N], 
+	    	byte threshSize, byte thresholdArr[])
+	    :Sensor(id, TONE_MODE_MULTI_ACORD, id){
 
 	      this->acordCount = acordCount;
 	      this->notesCount = notesCount;
@@ -70,7 +72,7 @@ class SensorMultiAcord : public Sensor{
 				noteIsOn[acord] = false;
 
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOff(0, noteValue[acord][note], mMyMidi.velocity);         
+					mMyMidi.noteOff(getChannel(), noteValue[acord][note], mMyMidi.velocity);         
 				}  
 			}
         }
@@ -111,14 +113,14 @@ class SensorMultiAcord : public Sensor{
 				if (noteIsOn[acord] == false && inRange) {
 					noteIsOn[acord] = true;
 					for (byte note = 0; note < notesCount; note++) {
-						mMyMidi.noteOn(0, noteValue[acord][note], mMyMidi.velocity);         
+						mMyMidi.noteOn(getChannel(), noteValue[acord][note], mMyMidi.velocity);         
 				}              
 
 				// note OFF  
 				} else if (noteIsOn[acord] == true && !inRange) {
 					noteIsOn[acord] = false;                          
 					for (byte note = 0; note < notesCount; note++) {
-						mMyMidi.noteOff(0, noteValue[acord][note], mMyMidi.velocity);         
+						mMyMidi.noteOff(getChannel(), noteValue[acord][note], mMyMidi.velocity);         
 					}   
 				}
 

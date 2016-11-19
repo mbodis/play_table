@@ -13,27 +13,27 @@ class NoteSetup {
   	void setupNotes(int idx, MyMidi &mMyMidi){
 		switch(idx){
 			case 0: 
-			mMyMidi.setupMidi();
+			mMyMidi.setupMidiInit(false);
 			notesSetup_0_Paanko();
 			break;
 
 			case 1:
-			mMyMidi.setupMidi();
+			mMyMidi.setupMidiInit(false);
 			noteSetup_1_Arabic();
 			break;      
 
 			case 2:
-			mMyMidi.setupMidi();
+			mMyMidi.setupMidiInit(false);
 			noteSetup_3_D_mol();
 			break;      
 
 			case 3:
-			mMyMidi.setupMidi();
+			mMyMidi.setupMidiInit(false);
 			noteSetup_4_Arpeggio();
 			break; 
 
 			case 4:
-			mMyMidi.setupMidiPercussion();
+			mMyMidi.setupMidiPercussionInit(false);
 			noteSetup_5_Drumm();
 			break;      
 		}

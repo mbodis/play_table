@@ -38,7 +38,7 @@ class SensorArpeggio : public Sensor{
 	     * notesArr <byte[]> - array of note values      
 	     *
 	     */
-	    SensorArpeggio(byte id, byte notesCount, byte notesArr[]):Sensor(id, TONE_MODE_ARPEGGIO){
+	    SensorArpeggio(byte id, byte notesCount, byte notesArr[]):Sensor(id, TONE_MODE_ARPEGGIO, id){
 	      
 	      this->notesCount = notesCount;
 
@@ -53,7 +53,7 @@ class SensorArpeggio : public Sensor{
         virtual void sensorOff(MyMidi &mMyMidi){
 			for (byte note = 0; note < notesCount; note++) {
 				noteIsOnMulti[note] = false;            
-				mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
+				mMyMidi.noteOff(getChannel(), notesValueMulti[note], mMyMidi.velocity);    
 			}
         }
 
@@ -91,12 +91,12 @@ class SensorArpeggio : public Sensor{
 				// note ON
 				if (noteIsOnMulti[note] == false && inRange) {             
 					noteIsOnMulti[note] = true;
-					mMyMidi.noteOn(0, notesValueMulti[note], mMyMidi.velocity);
+					mMyMidi.noteOn(getChannel(), notesValueMulti[note], mMyMidi.velocity);
 
 				// note OFF  
 				} else if (noteIsOnMulti[note] == true && !inRange) {               
 					noteIsOnMulti[note] = false;            
-					mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);    
+					mMyMidi.noteOff(getChannel(), notesValueMulti[note], mMyMidi.velocity);    
 				}
 			}
 

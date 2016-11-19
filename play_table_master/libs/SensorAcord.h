@@ -26,7 +26,7 @@ class SensorAcord : public Sensor{
 	     * notesArr <byte[]> - array of note values      
 	     *
 	     */
-	    SensorAcord(byte id, byte notesSize, byte notesArr[]):Sensor(id, TONE_MODE_ACORD){
+	    SensorAcord(byte id, byte notesSize, byte notesArr[]):Sensor(id, TONE_MODE_ACORD, id){
 			noteIsOnAcord = false;
 			notesCount = notesSize;       
 			for (byte i=0; i<notesCount; i++){
@@ -36,7 +36,7 @@ class SensorAcord : public Sensor{
 
         virtual void sensorOff(MyMidi &mMyMidi){
 			for (byte note = 0; note < notesCount; note++) {
-				mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
+				mMyMidi.noteOff(getChannel(), noteValueAcord[note], mMyMidi.velocity);         
 			}
 			noteIsOnAcord = false;
         }
@@ -52,26 +52,27 @@ class SensorAcord : public Sensor{
 				pressure = 127;
 			}
 
+			setVolume(pressure);
 
 			// note ON
 			if (noteIsOnAcord == false && thresholdRaw > 2) {         
 				noteIsOnAcord = true;
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOn(0, noteValueAcord[note], mMyMidi.velocity);      
+					mMyMidi.noteOn(getChannel(), noteValueAcord[note], mMyMidi.velocity);      
 			}
 
 			// note OFF  
 			} else if (noteIsOnAcord == true && thresholdRaw < 2) {
 				noteIsOnAcord = false;      
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOff(0, noteValueAcord[note], mMyMidi.velocity);         
+					mMyMidi.noteOff(getChannel(), noteValueAcord[note], mMyMidi.velocity);         
 				}
 			}
 
 			// note pressure
 			if (noteIsOnAcord == true){
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.afterTouch(0, noteValueAcord[note], pressure);
+					mMyMidi.afterTouch(getChannel(), noteValueAcord[note], pressure);
 				}
 			}
 

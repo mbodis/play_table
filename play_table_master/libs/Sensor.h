@@ -10,15 +10,26 @@ class Sensor {
   	public:
   		byte sensorId = -1;
     	byte mode = -1;
+    	byte channel = 0;
+    	byte volume = 0;
         
-        Sensor(byte id, byte sMode){
-        	sensorId = id;
-        	mode = sMode;
+        Sensor(byte mId, byte mMode, byte mChannel){
+        	sensorId = mId;
+        	mode = mMode;
+        	channel = mChannel;
         }
 
         virtual void sensorOff(MyMidi&);
         virtual void playNote(MyMidi&, byte, byte);
         
+        byte getVolume(){
+        	return volume;
+        }
+        
+        void setVolume(byte mVolume){
+        	volume = mVolume;
+        }
+
         /*
 	     * toggle note setup helper for visualization
 	     */
@@ -46,6 +57,10 @@ class Sensor {
 	    
 	    void setVisualLedHelper(byte vh){
 	    	visualLedsHelper = vh;
+	    }
+
+	    byte getChannel(){
+	    	return channel;
 	    }
 
 	    /*

@@ -76,7 +76,7 @@ void setup() {
   mTouchSensors.setupProximity();
 
   // initialise MIDI
-  mMyMidi.setupMidi();
+  mMyMidi.setupMidiInit(true);
 
   // do some initial led effect
   mVisualEffects.initScreenSaver(mMyTable);  
