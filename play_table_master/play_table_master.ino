@@ -31,7 +31,13 @@
 #include <Constants.h>
 #include <MyMidi.h>
 #include <Themerin.h>
-#include <TableSensor.h>
+#include <Sensor.h>
+#include <SensorSingle.h>
+#include <SensorMulti.h>
+#include <SensorAcord.h>
+#include <SensorMultiAcord.h>
+#include <SensorArpeggio.h>
+#include <SensorArpeggioAcord.h>
 #include <NoteSetup.h>
 #include <MyTable.h>
 #include <TouchSensors.h>

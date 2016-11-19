@@ -15,5 +15,6 @@ const byte TONE_MODE_MULTI = 1;
 const byte TONE_MODE_ACORD = 2;
 const byte TONE_MODE_MULTI_ACORD = 3;
 const byte TONE_MODE_ARPEGGIO = 4;
+const byte TONE_MODE_ARPEGGIO_ACORD = 5;
 
 #endif

@@ -45,8 +45,6 @@ class MyTable {
     };
   
   NoteSetup mNoteSetup; 
-
-  // TableSensor mTableSensors[ELECTRODES_COUNT];  
   
   void setupButton(){
     pinMode(buttonPin, INPUT);
@@ -97,16 +95,19 @@ class MyTable {
     // v == <44, 922>
     int v = abs(1000-analogRead(PIN_KNOB_NOTES));
   
+    // Serial.print("knob: ");
+    // Serial.println(v);
+
     byte newNotesIdx = -1;
-    if (v < 224){
+    if (v < 90){
       newNotesIdx = 0;
-    }else if (v > 276 && v < 456){
+    }else if (v > 210 && v < 290){
       newNotesIdx = 1;
-    }else if (v > 508 && v < 688){
+    }else if (v > 385 && v < 480){
       newNotesIdx = 2;
-    }else if ( v > 740 && v < 800){
+    }else if ( v > 586 && v < 658){
       newNotesIdx = 3;
-    }else if ( v > 820){
+    }else if ( v > 742){
       newNotesIdx = 4;
     }else{
       newNotesIdx = noteSetupSelectedIdx;
@@ -129,9 +130,9 @@ class MyTable {
   /*
    * switching to another mode
    */
-  void turnOffAllNotes(MyMidi mMyMidi){
+  void turnOffAllNotes(MyMidi &mMyMidi){
     for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
-       mNoteSetup.mTableSensors[elc].sensorOff(mMyMidi);
+       mNoteSetup.mTableSensors[elc]->sensorOff(mMyMidi);
     }
   }
 
@@ -142,7 +143,7 @@ class MyTable {
    */
   void playToneMode(MyMidi &mMyMidi){
     for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {     
-      mNoteSetup.mTableSensors[elc].playNote(mMyMidi, electrodeLastValueRaw[elc], electrodeLastValues[elc]);
+      mNoteSetup.mTableSensors[elc]->playNote(mMyMidi, (byte)electrodeLastValueRaw[elc], electrodeLastValues[elc]);
     }
   }
 
@@ -185,7 +186,7 @@ class MyTable {
   void initScreenSaverSensorType(){
     
     for (byte sensor = 0; sensor<ELECTRODES_COUNT; sensor++){  
-      mNoteSetup.mTableSensors[sensor].visualLedsHelper = 2;
+      mNoteSetup.mTableSensors[sensor]->setVisualLedHelper(2);
     }
 
     for (byte n = 0; n<13; n++){  
@@ -194,32 +195,44 @@ class MyTable {
         /*
          * SINGLE TONE MODE
          */ 
-        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_SINGLE){
-          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, 128);            
+        if (mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_SINGLE){
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, 128);            
         }
 
         /*
          * ACORD TONE MODE
          */
-        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_ACORD){
-          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, 255);            
+        if (mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_ACORD){
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, 255);            
         }
 
         /*
-         * MULTI TONE, ARPEGGIO
+         * MULTI TONE
          */
-        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI
-          || mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_ARPEGGIO){
-          mNoteSetup.mTableSensors[sensor].incVisualLedHelper(9);                              
-          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor].visualLedsHelper);
+        if (mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_MULTI){
+          mNoteSetup.mTableSensors[sensor]->incVisualLedHelper(9);                              
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor]->getVisualLedHelper());
         }
 
         /*
          * ACORD MULTI TONE
          */
-        if (mNoteSetup.mTableSensors[sensor].getMode() == TONE_MODE_MULTI_ACORD){            
-          mNoteSetup.mTableSensors[sensor].incVisualLedHelper(18);                    
-          sendMessageToSlave(mNoteSetup.mTableSensors[sensor].getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor].visualLedsHelper);
+        if (mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_MULTI_ACORD){            
+          mNoteSetup.mTableSensors[sensor]->incVisualLedHelper(18);                    
+          sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor]->getVisualLedHelper());
+        }
+
+        /*
+         * ARPEGGIO, ARPEGGIO ACORD
+         */
+        if (mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_ARPEGGIO
+          || mNoteSetup.mTableSensors[sensor]->getMode() == TONE_MODE_ARPEGGIO_ACORD){
+          mNoteSetup.mTableSensors[sensor]->incVisualLedHelper(18);         
+          if (n%2 == 0){
+            sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, 10);
+          }else{
+            sendMessageToSlave(mNoteSetup.mTableSensors[sensor]->getSensorId()+SLAVE_FIRST_ID, mNoteSetup.mTableSensors[sensor]->getVisualLedHelper());
+          }                    
         }
                 
       }

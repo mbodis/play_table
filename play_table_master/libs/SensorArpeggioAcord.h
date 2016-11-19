@@ -1,0 +1,103 @@
+#ifndef SENSORARPEGGIOACORD_H
+#define SENSORARPEGGIOACORD_H
+
+#include <Arduino.h>
+
+/*
+ * arpeggio
+ * toggle between tones, increase tempo by distance
+ * type acord, keep playing previous tones
+ */   
+class SensorArpeggioAcord : public Sensor{
+	private:
+	    // arpeggio counter
+	    byte arpCount = 0;
+
+	    // bool arr to know what note is on
+	    bool noteIsOn[18];
+	    
+	    // current selected note setup
+	    byte notesValue[18];
+	    
+	    // total notes count
+	    byte notesCount;
+	    
+  	public:
+
+  		/*
+	     * id <byte> - id of a sensor
+	     * notesSize <byte> - number of notes that are played at same time
+	     * notesArr <byte[]> - array of note values      
+	     *
+	     */
+	    SensorArpeggioAcord(byte id, byte notesCount, byte notesArr[]):Sensor(id, TONE_MODE_ARPEGGIO_ACORD){
+			
+			this->notesCount = notesCount;       
+			
+			for (byte i=0; i<notesCount; i++){
+				notesValue[i] = notesArr[i];
+				noteIsOn[i] = false;  
+			}
+	    }
+
+
+        virtual void sensorOff(MyMidi &mMyMidi){
+			for (byte note = 0; note < notesCount; note++) {
+				noteIsOn[note] = false;            
+				mMyMidi.noteOff(0, notesValue[note], mMyMidi.velocity);    
+			}
+        }
+
+        /*
+	     *
+	     * byte thresholdRaw <0 - 50>
+	     * byte thresholdFiltered <2-255>
+	     */
+        virtual void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered){
+			byte pressure = thresholdFiltered/1.5;
+			if (pressure > 127){
+				pressure = 127;
+			}
+
+
+
+			for (byte note = 0; note < notesCount; note++) {
+				bool inRange = false;            
+
+				if (thresholdFiltered > 240) inRange = true;
+
+				if (thresholdRaw > 2){
+					if (arpCount > note*255/notesCount && arpCount<255){
+						inRange = true;
+					}
+
+				}
+
+				// note ON
+				if (noteIsOn[note] == false && inRange) {             
+					noteIsOn[note] = true;
+					mMyMidi.noteOn(0, notesValue[note], mMyMidi.velocity);
+
+				// note OFF  
+				} else if (noteIsOn[note] == true && !inRange) {               
+					noteIsOn[note] = false;            
+					mMyMidi.noteOff(0, notesValue[note], mMyMidi.velocity);    
+				}
+				// note pressure - disabled, because tones are changing by distance
+			}
+
+			if (thresholdRaw <= 2 ){
+				arpCount = 0;
+			}
+
+			// "thresholdFiltered/10" is increasing faster than "thresholdFiltered/20"
+			arpCount += thresholdFiltered/40;
+
+			if (arpCount == 255){
+				arpCount = 0;
+			}			
+        }
+};
+
+
+#endif
