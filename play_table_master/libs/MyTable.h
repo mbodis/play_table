@@ -176,7 +176,7 @@ class MyTable {
         //Serial.print("selectedMode: ");
         //Serial.println(selectedMode);
         if (selectedMode == PLAY_MODE_TONES){      
-            playToneMode(mMyMidi);
+            playToneMode(mMyMidi);            
         }else if (selectedMode == PLAY_MODE_THEMERIN){
             mThemerin.playThereminMode(mMyMidi); 
         }
@@ -196,8 +196,18 @@ class MyTable {
      */
     void sendValuesToSlaves() {
         for (byte i = 0; i < ELECTRODES_COUNT; i++) {
-           sendMessageToSlave(i+SLAVE_FIRST_ID, electrodeLastValues[i]);
+
+            // auto mode
+            if(mNoteSetup.mTableSensors[i]->getMode() == TONE_MODE_ARPEGGIO
+                && (static_cast<SensorArpeggio*>(mNoteSetup.mTableSensors[i]))->isLoopEnabled()){
+                sendMessageToSlave(i+SLAVE_FIRST_ID, static_cast<SensorArpeggio*>(mNoteSetup.mTableSensors[i])->getArpCount() );
+
+            // default value from sensor
+            }else{
+                sendMessageToSlave(i+SLAVE_FIRST_ID, electrodeLastValues[i]);
+            }
         }
+        
     }    
 
     void sendMessageToSlave(byte idSlave, byte valueSlave) {

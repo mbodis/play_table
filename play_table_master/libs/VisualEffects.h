@@ -14,7 +14,7 @@ class VisualEffects{
       for (byte loop = 0; loop<2; loop++){  
         int val = 0;
         while(true){
-          for (int ele = 30; ele<38; ele++){    
+          for (int ele = SLAVE_FIRST_ID; ele <= SLAVE_FIRST_ID + ELECTRODES_COUNT; ele++){    
             mMyTable.sendMessageToSlave(ele, val);      
           }
             delay(25);
@@ -24,7 +24,7 @@ class VisualEffects{
       
         val = 255;
         while(true){
-          for (byte ele = 30; ele<38; ele++){    
+          for (byte ele = SLAVE_FIRST_ID; ele <= SLAVE_FIRST_ID + ELECTRODES_COUNT; ele++){    
             mMyTable.sendMessageToSlave(ele, val);      
           }
             delay(25);
@@ -38,13 +38,13 @@ class VisualEffects{
       int val = 0;
       
         while(true){
-          mMyTable.sendMessageToSlave(30, (val+15)%255);
-          mMyTable.sendMessageToSlave(31, (val+30)%255);
-          mMyTable.sendMessageToSlave(32, (val+45)%255);
-          mMyTable.sendMessageToSlave(33, (val+60)%255);
-          mMyTable.sendMessageToSlave(34, (val+75)%255);
-          mMyTable.sendMessageToSlave(35, (val+90)%255);
-          mMyTable.sendMessageToSlave(36, (val+105)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 0, (val+15)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 1, (val+30)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 2, (val+45)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 3, (val+60)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 4, (val+75)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 5, (val+90)%255);
+          mMyTable.sendMessageToSlave(SLAVE_FIRST_ID + 6, (val+105)%255);
           delay(25);
           val+=10;    
           if (val > 2000)break;

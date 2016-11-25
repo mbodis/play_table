@@ -11,7 +11,6 @@ const byte HAND_DISATNCE_SAVED_VALUES = 11;
  */   
 class SensorArpeggio : public Sensor{
 	private:
-	    
 	    // arpeggio counter
 	    byte arpCount = 0;
 	    
@@ -30,6 +29,7 @@ class SensorArpeggio : public Sensor{
 	    byte lastTouchSensorValues[HAND_DISATNCE_SAVED_VALUES];
 	    byte lastTouchSensorValuesIdx = 0;
 	    byte userTouchSensorLocked = HAND_DISATNCE_SAVED_VALUES;
+	    
   	public:
 
   		/*
@@ -139,7 +139,7 @@ class SensorArpeggio : public Sensor{
 
 
         /*
-         * sort array, return middle value
+         * getMedian: sort array, return middle value
          */
         byte getMedianFromLastValues(){
 			isort(lastTouchSensorValues, HAND_DISATNCE_SAVED_VALUES);
@@ -149,15 +149,23 @@ class SensorArpeggio : public Sensor{
         /*
          * sorting array
          */
-        void isort(byte *a, int n){
-			for (int i = 1; i < n; ++i){
-				int j = a[i];
-				int k;
+        void isort(byte *a, byte n){
+			for (byte i = 1; i < n; ++i){
+				byte j = a[i];
+				byte k;
 				for (k = i - 1; (k >= 0) && (j < a[k]); k--){
 					a[k + 1] = a[k];
 				}
 				a[k + 1] = j;
 			}
+		}
+
+		byte getArpCount(){
+			return arpCount;
+		}
+
+		bool isLoopEnabled(){
+			return loopIsOn;
 		}
     
 };

@@ -178,7 +178,7 @@ class NoteSetup {
   		mTableSensors[ID] = new SensorSingle(ID, 36);
   	}
 
- //  	/* * * * * * TEST SETUP * * * * * */
+  	/* * * * * * TEST SETUP * * * * * */
   	
   	void testSetupSingle(){
   		
