@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 const byte HAND_DISATNCE_SAVED_VALUES = 11;
+const byte DEFAULT_TEMPO = 115;
 
 /*
  * arpeggio
@@ -25,9 +26,9 @@ class SensorArpeggio : public Sensor{
 	    
 	    // looping part
 	    bool loopIsOn = false;
-	    byte tempo = 125; //default
-	    byte lastTouchSensorValues[HAND_DISATNCE_SAVED_VALUES];
-	    byte lastTouchSensorValuesIdx = 0;
+	    byte tempo = DEFAULT_TEMPO; 
+	    byte lastDistanceSensorValues[HAND_DISATNCE_SAVED_VALUES];
+	    byte lastDistanceSensorValuesIdx = 0;
 	    byte userTouchSensorLocked = HAND_DISATNCE_SAVED_VALUES;
 	    
   	public:
@@ -40,13 +41,14 @@ class SensorArpeggio : public Sensor{
 	     */
 	    SensorArpeggio(byte id, byte notesCount, byte notesArr[]):Sensor(id, TONE_MODE_ARPEGGIO, id){
 	      
-	      this->notesCount = notesCount;
+			this->notesCount = notesCount;
 
-	      for (byte i=0; i<notesCount; i++){
-	        notesValueMulti[i] = notesArr[i];
-	        noteIsOnMulti[i] = false;  
-	      }
+			for (byte i=0; i<notesCount; i++){
+				notesValueMulti[i] = notesArr[i];
+				noteIsOnMulti[i] = false;  
+			}
 
+			resetSensorDistanceValues();
 	    }
 
 
@@ -69,7 +71,9 @@ class SensorArpeggio : public Sensor{
         		return;
         	}
 
-			saveTouchSensorNewValue(thresholdFiltered);
+        	if (thresholdRaw > 2 ){
+				saveSensorNewDistanceValue(thresholdFiltered);
+			}
 
 
 			for (byte note = 0; note < notesCount; note++) {
@@ -106,6 +110,10 @@ class SensorArpeggio : public Sensor{
 				loopIsOn = !loopIsOn;
 				tempo = getMedianFromLastValues(); 
 				userTouchSensorLocked = 10;
+
+				if (!loopIsOn){
+					resetSensorDistanceValues();
+				}
 			}
 
 			// if loop is ON
@@ -130,20 +138,33 @@ class SensorArpeggio : public Sensor{
         }
 
 
-        void saveTouchSensorNewValue(byte touchSensorValue){
-        	lastTouchSensorValues[lastTouchSensorValuesIdx] = touchSensorValue;
-        	lastTouchSensorValuesIdx ++;
-        	if (lastTouchSensorValuesIdx == HAND_DISATNCE_SAVED_VALUES)
-        		lastTouchSensorValuesIdx = 0;
+        void saveSensorNewDistanceValue(byte touchSensorValue){
+        	lastDistanceSensorValues[lastDistanceSensorValuesIdx] = touchSensorValue;
+        	lastDistanceSensorValuesIdx ++;
+        	if (lastDistanceSensorValuesIdx == HAND_DISATNCE_SAVED_VALUES)
+        		lastDistanceSensorValuesIdx = 0;
         }
 
+
+        void resetSensorDistanceValues(){
+        	for (byte i = 0; i < HAND_DISATNCE_SAVED_VALUES; i++){
+        		lastDistanceSensorValues[i] = 0;
+        	}
+        	lastDistanceSensorValuesIdx = 0;
+        }
 
         /*
          * getMedian: sort array, return middle value
          */
         byte getMedianFromLastValues(){
-			isort(lastTouchSensorValues, HAND_DISATNCE_SAVED_VALUES);
-        	return lastTouchSensorValues[HAND_DISATNCE_SAVED_VALUES/2];
+        	for (byte i = 0; i < HAND_DISATNCE_SAVED_VALUES; i++){
+        		if (lastDistanceSensorValues[i] == 0){
+        			return DEFAULT_TEMPO;
+        		}
+        	}
+
+			isort(lastDistanceSensorValues, HAND_DISATNCE_SAVED_VALUES);
+        	return lastDistanceSensorValues[HAND_DISATNCE_SAVED_VALUES/2];
         }
 
         /*
