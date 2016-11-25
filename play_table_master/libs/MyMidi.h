@@ -100,50 +100,16 @@ class MyMidi {
         // setup Serial
         mySerial = new SoftwareSerial(RX, TX);
 
-        // empty playing notes array 
-        for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
-          notesOn[b] = 0;
-        }
-
         // setup midi output
         midi2UsbSetup();
      }
-
-    void addNoteToPlayList(byte note){
-        for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
-            if (notesOn[b] == 0){
-                notesOn[b] = note;
-                break;
-            }
-        }
-    }
-
-    void removeNoteFromPlayList(byte note){
-        for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
-            if (notesOn[b] == note){
-                notesOn[b] = 0;
-                break;
-            }
-        }
-    }
-
-    bool isNoteOnPlayList(byte note){
-        for (byte b=0; b<MAX_NOTES_TO_PLAY_AT_ONCE; b++){
-            if (notesOn[b] == note){
-                    return true;
-            }
-        }
-        
-        return false;
-    }
 
     /*
      * Send a MIDI note-on message.  Like pressing a piano key.
      * channel ranges from 0-15
      * attack_velocity <1-127>
      */
-    void noteOn(byte channel, byte note, byte attack_velocity) {
-        addNoteToPlayList(note);
+    void noteOn(byte channel, byte note, byte attack_velocity) {        
         talkMIDI( (0x90 | channel), note, attack_velocity);
         midi2Usb(0x09, 0x90, note, attack_velocity);
     }
@@ -153,11 +119,8 @@ class MyMidi {
      * attack_velocity <1-127>
      */
     void noteOff(byte channel, byte note, byte release_velocity) {
-        removeNoteFromPlayList(note);
-        if (!isNoteOnPlayList(note)){
-            talkMIDI( (0x80 | channel), note, release_velocity);
-            midi2Usb(0x08, 0x80, note, release_velocity);
-        }
+        talkMIDI( (0x80 | channel), note, release_velocity);
+        midi2Usb(0x08, 0x80, note, release_velocity);
     }
   
     /*
