@@ -1,7 +1,7 @@
 /*******************************************************************************
 
   created: 2016-03-26
-  last modified: 2016-09-20
+  modified: 2016-11-25
   Miroslav Bodis - play table - master
 
   MIDI docs:
@@ -9,22 +9,6 @@
   http://www.music-softwwhiteNotesare-development.com/midi-tutorial.html
   http://www.gweep.net/~whiteNotesprefect/eng/reference/protocol/midispec.html#Aft
 
-
-  *** Protocol ***
-  protocol byte stream - serial connection from mater to slaves
-  
-  0 | [ID] | 1 | [VALUE]
-  ID = <20-31>      // ELECTRODE_0 == 20, ..., ELECTODE_31 == 31
-  VALUE = <2 - 255> // value 0 is key for id, value 1 is key for value
-
-  example:
-  0 | 20 | 1 | 123
-  key | value | key | value ...
-  id=20 value=123
-  
-  *** *** *** *** *** ***
-
-  
 *******************************************************************************/
 #include <MPR121.h>
 
@@ -39,6 +23,7 @@
 #include <SensorArpeggio.h>
 #include <SensorArpeggioAcord.h>
 #include <NoteSetup.h>
+#include <NoteGroup.h>
 #include <MyTable.h>
 #include <TouchSensors.h>
 #include <MyCommunicator.h>

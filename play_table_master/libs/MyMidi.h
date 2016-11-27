@@ -84,7 +84,6 @@ class MyMidi {
 
   private:
       MIDIEvent e;
-      byte notesOn[MAX_NOTES_TO_PLAY_AT_ONCE];
 
   public:    
       byte resetMIDI = 8; // Tied to VS1053 Reset line

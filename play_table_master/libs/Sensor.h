@@ -3,15 +3,19 @@
 
 #include <Arduino.h>
 
+/*
+ * Abstract class for sensor
+ */
 class Sensor {
 	private:
-  		
-    
-  	public:
   		byte sensorId = -1;
     	byte mode = -1;
     	byte channel = 0;
     	byte volume = 0;
+    	bool autoMode = false;
+  		bool loopingIsOn = false;
+    
+  	public:
         
         Sensor(byte mId, byte mMode, byte mChannel){
         	sensorId = mId;
@@ -71,6 +75,22 @@ class Sensor {
 			if (visualLedsHelper > 255){
 				visualLedsHelper = 255;
 			}
+	    }
+
+	    bool hasAutoMode(){
+	    	return autoMode;
+	    }
+
+	    void setAutoMode(bool loopModeVal){
+	    	autoMode = loopModeVal;
+	    }
+
+	    bool isLoopingEnabled(){
+	    	return loopingIsOn;
+	    }
+
+	    void setLooping(bool loopState){
+	    	loopingIsOn = loopState;
 	    }
 };
 

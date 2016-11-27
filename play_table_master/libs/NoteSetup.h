@@ -9,32 +9,42 @@ class NoteSetup {
   	public:
   	
   	Sensor *mTableSensors[ELECTRODES_COUNT];
+  	
+  	bool groupMode = false;
+  	byte groupIds[ELECTRODES_COUNT];
 
   	void setupNotes(int idx, MyMidi &mMyMidi){
+
+
 		switch(idx){
 			case 0: 
 			mMyMidi.setupMidiInit(false);
 			notesSetup_0_Paanko();
+			setGrout_3_4();
 			break;
 
 			case 1:
 			mMyMidi.setupMidiInit(false);
 			noteSetup_1_Arabic();
+  			noGroup();
 			break;      
 
 			case 2:
 			mMyMidi.setupMidiInit(false);
 			noteSetup_3_D_mol();
+  			noGroup();
 			break;      
 
 			case 3:
 			mMyMidi.setupMidiInit(false);
 			noteSetup_4_Arpeggio();
+			setGrout_3_4();
 			break; 
 
 			case 4:
 			mMyMidi.setupMidiPercussionInit(false);
 			noteSetup_5_Drumm();
+  			noGroup();
 			break;      
 		}
 
@@ -44,7 +54,7 @@ class NoteSetup {
   		// testSetupAcordMultiMode();
   		// testSetupArpeggio();
   		// testSetupMix();
-  	}
+  	}  	
 
   	void notesSetup_0_Paanko(){
 
@@ -152,7 +162,7 @@ class NoteSetup {
   		mTableSensors[ID] = new SensorSingle(ID, 77);
 		
 		ID = 6;
-  		mTableSensors[ID] = new SensorSingle(ID, 72);
+  		mTableSensors[ID] = new SensorSingle(ID, 72);  		
   	}
 
   	void noteSetup_5_Drumm(){
@@ -176,6 +186,57 @@ class NoteSetup {
 		
 		ID = 6;
   		mTableSensors[ID] = new SensorSingle(ID, 36);
+  	}
+
+  	/* * * * * * group setups * * * * * */
+
+  	void noGroup(){
+  		for (byte group = 0; group < ELECTRODES_COUNT; group++){
+  			groupIds[group] = 0;
+  		}
+  		groupMode = false;
+  	}
+
+  	void setGrout_1_6(){
+  		groupIds[0] = 1; groupIds[1] = 2;
+  		groupIds[2] = 2; groupIds[3] = 2;
+  		groupIds[4] = 2; groupIds[5] = 2;
+  		groupIds[6] = 2; groupMode = true;
+  	}
+
+  	void setGrout_2_5(){
+  		groupIds[0] = 1; groupIds[1] = 1;
+  		groupIds[2] = 2; groupIds[3] = 2;
+  		groupIds[4] = 2; groupIds[5] = 2;
+  		groupIds[6] = 2; groupMode = true;
+  	}
+
+  	void setGrout_3_4(){
+  		groupIds[0] = 1; groupIds[1] = 1;
+  		groupIds[2] = 1; groupIds[3] = 2;
+  		groupIds[4] = 2; groupIds[5] = 2;
+  		groupIds[6] = 2; groupMode = true;
+  	}
+
+  	void setGrout_4_3(){
+  		groupIds[0] = 1; groupIds[1] = 1;
+  		groupIds[2] = 1; groupIds[3] = 1;
+  		groupIds[4] = 2; groupIds[5] = 2;
+  		groupIds[6] = 2; groupMode = true;
+  	}
+
+  	void setGrout_5_2(){
+  		groupIds[0] = 1; groupIds[1] = 1;
+  		groupIds[2] = 1; groupIds[3] = 1;
+  		groupIds[4] = 1; groupIds[5] = 2;
+  		groupIds[6] = 2; groupMode = true;
+  	}
+
+  	void setGrout_6_1(){
+  		groupIds[0] = 1; groupIds[1] = 1;
+  		groupIds[2] = 1; groupIds[3] = 1;
+  		groupIds[4] = 1; groupIds[5] = 1;
+  		groupIds[6] = 2; groupMode = true;
   	}
 
   	/* * * * * * TEST SETUP * * * * * */

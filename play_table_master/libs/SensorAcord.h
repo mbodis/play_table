@@ -70,11 +70,11 @@ class SensorAcord : public Sensor{
 			}
 
 			// note pressure
-			if (noteIsOnAcord == true){
-				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.afterTouch(getChannel(), noteValueAcord[note], pressure);
-				}
-			}
+			// if (noteIsOnAcord == true){
+			// 	for (byte note = 0; note < notesCount; note++) {
+			// 		mMyMidi.afterTouch(getChannel(), noteValueAcord[note], pressure);
+			// 	}
+			// }
 
 		}
 };

@@ -3,22 +3,11 @@
  
 #include <Arduino.h>
 
+/*
+ *
+ */
 class MyTable {
-
-    /*
-     * the electrode to monitor for proximity
-     */ 
-    #define PROX_ELECTRODE_0 0
-    #define PROX_ELECTRODE_1 1
-    #define PROX_ELECTRODE_2 2
-    #define PROX_ELECTRODE_3 3
-    #define PROX_ELECTRODE_4 4
-    #define PROX_ELECTRODE_5 5
-    #define PROX_ELECTRODE_6 6
-
-    #define PROTOCOL_ID_DELIMETER 0
-    #define PROTOCOL_VALUE_DELIMETER 1
-
+   
     private:
         const byte buttonPin = 13;
         byte buttonState = LOW;    
@@ -44,7 +33,8 @@ class MyTable {
             PROX_ELECTRODE_6 
         };
   
-    NoteSetup mNoteSetup; 
+    NoteSetup mNoteSetup;
+    NoteGroup mNoteGroup;
   
     void setupButton(){
         pinMode(buttonPin, INPUT);
@@ -81,16 +71,8 @@ class MyTable {
                 if (vv <= 0) vv = 1;
                 if (vv > 127) vv = 127;
 
-                // if (elc == 1){
-                //   Serial.print("volume: ");
-                //   Serial.print(volume);
-                //   Serial.print(" GG: ");
-                //   Serial.print(mNoteSetup.mTableSensors[elc]->getVolume());
-                //   Serial.print(" NEW: ");
-                //   Serial.println(vv);
-                // }
                 mMyMidi.setVolume(elc, vv);
-                // mMyMidi.setVolume(elc, volume);
+
             }else{
                 mMyMidi.setVolume(elc, volume);
             }
@@ -110,6 +92,7 @@ class MyTable {
         }
 
         mNoteSetup.setupNotes(newNoteSetupIdx, mMyMidi);
+        mNoteGroup.setGroup(mNoteSetup.groupIds);
     }
   
     /*
@@ -160,25 +143,76 @@ class MyTable {
         }
     }
 
+    void playSelectedMode(Themerin &mThemerin, MyMidi &mMyMidi){
+        // play tones
+        if (selectedMode == PLAY_MODE_TONES){      
+            playToneMode(mMyMidi);            
+        }else if (selectedMode == PLAY_MODE_THEMERIN){
+            mThemerin.playThereminMode(mMyMidi); 
+        }
+    }
+
     /*
      * 
-     * loop all touch sensors
+     * loop all touch sensors and play mode
      *
      */
     void playToneMode(MyMidi &mMyMidi){
+
+        // TOME MODE GROUP
+        if (mNoteSetup.groupMode){
+            playToneModeGroups(mMyMidi);                   
+
+        // TONE MODE NORMAL
+        }else{
+            playToneModeNormal(mMyMidi);
+        }
+    }
+
+    /*
+     *
+     */
+    void playToneModeNormal(MyMidi &mMyMidi){
         for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {     
             mNoteSetup.mTableSensors[elc]->playNote(mMyMidi, (byte)electrodeLastValueRaw[elc], electrodeLastValues[elc]);
         }
     }
 
-    void playSelectedMode(Themerin &mThemerin, MyMidi &mMyMidi){
-        // play tones
-        //Serial.print("selectedMode: ");
-        //Serial.println(selectedMode);
-        if (selectedMode == PLAY_MODE_TONES){      
-            playToneMode(mMyMidi);            
-        }else if (selectedMode == PLAY_MODE_THEMERIN){
-            mThemerin.playThereminMode(mMyMidi); 
+    /*
+     *
+     */
+    void playToneModeGroups(MyMidi &mMyMidi){
+        // update status
+        mNoteGroup.changeSensorStatus(electrodeLastValueRaw);
+        for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {    
+
+            // play by status - automatic mode
+            if (mNoteSetup.mTableSensors[elc]->hasAutoMode() 
+                && !mNoteSetup.mTableSensors[elc]->isLoopingEnabled() 
+                && mNoteGroup.sensorStatus[elc] == SENSOR_STATE_HOVER){
+                // turn OFF all sensors from same group
+                for (byte elc2 = 0; elc2 < ELECTRODES_COUNT; elc2++) {    
+                    if (mNoteGroup.groupIds[elc] == mNoteGroup.groupIds[elc2] && elc2 != elc){
+                        mNoteSetup.mTableSensors[elc2]->sensorOff(mMyMidi);
+                    }
+                }
+            }
+
+            // play by status - simple hover
+            if (mNoteGroup.sensorStatus[elc] == SENSOR_STATE_HOVER 
+                || mNoteGroup.sensorStatus[elc] == SENSOR_STATE_HAND_ABOVE
+                || mNoteGroup.sensorStatus[elc] == SENSOR_STATE_RELEASING ){
+                mNoteSetup.mTableSensors[elc]->playNote(mMyMidi, (byte)electrodeLastValueRaw[elc], electrodeLastValues[elc]);
+            
+            // stop by status - simple
+            }else if (mNoteGroup.sensorStatus[elc] == SENSOR_STATE_START_BLOCKING_BY_GROUP){
+                mNoteSetup.mTableSensors[elc]->sensorOff(mMyMidi);
+            }
+
+            // play auto mode
+            if(mNoteSetup.mTableSensors[elc]->isLoopingEnabled()){
+                mNoteSetup.mTableSensors[elc]->playNote(mMyMidi, (byte)electrodeLastValueRaw[elc], electrodeLastValues[elc]);
+            }
         }
     }
 
@@ -199,7 +233,7 @@ class MyTable {
 
             // auto mode
             if(mNoteSetup.mTableSensors[i]->getMode() == TONE_MODE_ARPEGGIO
-                && (static_cast<SensorArpeggio*>(mNoteSetup.mTableSensors[i]))->isLoopEnabled()){
+                && mNoteSetup.mTableSensors[i]->isLoopingEnabled()){
                 sendMessageToSlave(i+SLAVE_FIRST_ID, static_cast<SensorArpeggio*>(mNoteSetup.mTableSensors[i])->getArpCount() );
 
             // default value from sensor

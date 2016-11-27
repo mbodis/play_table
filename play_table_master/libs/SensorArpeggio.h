@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 const byte HAND_DISATNCE_SAVED_VALUES = 11;
+const byte USER_TOUCH_LOCK_LIMIT = 5;
 const byte DEFAULT_TEMPO = 115;
 
 /*
@@ -25,11 +26,10 @@ class SensorArpeggio : public Sensor{
 	    byte notesCount;
 	    
 	    // looping part
-	    bool loopIsOn = false;
 	    byte tempo = DEFAULT_TEMPO; 
 	    byte lastDistanceSensorValues[HAND_DISATNCE_SAVED_VALUES];
 	    byte lastDistanceSensorValuesIdx = 0;
-	    byte userTouchSensorLocked = HAND_DISATNCE_SAVED_VALUES;
+	    byte userTouchSensorLocked = 0;
 	    
   	public:
 
@@ -47,16 +47,20 @@ class SensorArpeggio : public Sensor{
 				notesValueMulti[i] = notesArr[i];
 				noteIsOnMulti[i] = false;  
 			}
+			setAutoMode(true);
+			setLooping(false);
 
 			resetSensorDistanceValues();
 	    }
-
 
         virtual void sensorOff(MyMidi &mMyMidi){
 			for (byte note = 0; note < notesCount; note++) {
 				noteIsOnMulti[note] = false;            
 				mMyMidi.noteOff(getChannel(), notesValueMulti[note], mMyMidi.velocity);    
 			}
+			setLooping(false);
+			resetSensorDistanceValues();
+			tempo = DEFAULT_TEMPO;			
         }
 
         /*
@@ -82,7 +86,7 @@ class SensorArpeggio : public Sensor{
 				// if too close just play acord
 				// if (thresholdFiltered > 235) inRange = true;
 
-				if (thresholdRaw > 2 || loopIsOn){
+				if (thresholdRaw > 2 || isLoopingEnabled()){
 
 					// play only one note at time
 					if ((arpCount > (note*(255/notesCount))) 
@@ -106,18 +110,18 @@ class SensorArpeggio : public Sensor{
 
 
 			
-        	if (thresholdFiltered >= 253){
-				loopIsOn = !loopIsOn;
-				tempo = getMedianFromLastValues(); 
-				userTouchSensorLocked = 10;
+        	if (thresholdFiltered >= 253 && userTouchSensorLocked == 0){				
+				setLooping(!isLoopingEnabled());
+				tempo = getMedianFromLastValues();
+				userTouchSensorLocked = USER_TOUCH_LOCK_LIMIT;
 
-				if (!loopIsOn){
-					resetSensorDistanceValues();
+				if (!isLoopingEnabled()){
+					sensorOff(mMyMidi);
 				}
 			}
 
 			// if loop is ON
-			if (loopIsOn){
+			if (isLoopingEnabled()){
 				arpCount += tempo/40;
 
 			// if loop is OFF
@@ -183,11 +187,7 @@ class SensorArpeggio : public Sensor{
 
 		byte getArpCount(){
 			return arpCount;
-		}
-
-		bool isLoopEnabled(){
-			return loopIsOn;
-		}
+		}		
     
 };
 

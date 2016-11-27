@@ -28,7 +28,7 @@ class SensorSingle : public Sensor{
 
         virtual void sensorOff(MyMidi &mMyMidi){
 			noteIsOn = false;
-			mMyMidi.noteOff(0, noteValue, mMyMidi.velocity);
+			mMyMidi.noteOff(getChannel(), noteValue, mMyMidi.velocity);
         }
 
         /*
@@ -56,9 +56,9 @@ class SensorSingle : public Sensor{
 			}
 
 			// note pressure
-			if (noteIsOn){
-				mMyMidi.afterTouch(getChannel(), noteValue, pressure);
-			}
+			// if (noteIsOn){
+			// 	mMyMidi.afterTouch(getChannel(), noteValue, pressure);
+			// }
 	        
         }
 };
