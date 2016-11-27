@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 const byte HAND_DISATNCE_SAVED_VALUES = 11;
-const byte USER_TOUCH_LOCK_LIMIT = 5;
+const byte USER_TOUCH_LOCK_LIMIT = 15;
 const byte DEFAULT_TEMPO = 115;
 
 /*
@@ -68,7 +68,7 @@ class SensorArpeggio : public Sensor{
 	     * byte thresholdRaw <0 - 50>
 	     * byte thresholdFiltered <2-255>
 	     */
-        virtual void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered){			
+        virtual void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered){
 
         	if (userTouchSensorLocked > 0){
         		userTouchSensorLocked--;
@@ -113,6 +113,7 @@ class SensorArpeggio : public Sensor{
         	if (thresholdFiltered >= 253 && userTouchSensorLocked == 0){				
 				setLooping(!isLoopingEnabled());
 				tempo = getMedianFromLastValues();
+				tempo = (tempo < 40) ? 40 : tempo;
 				userTouchSensorLocked = USER_TOUCH_LOCK_LIMIT;
 
 				if (!isLoopingEnabled()){
@@ -132,6 +133,7 @@ class SensorArpeggio : public Sensor{
 
 				// "thresholdFiltered/10" is increasing faster than "thresholdFiltered/20"
 				// thresholdFiltered/40 - best 
+				thresholdFiltered = (thresholdFiltered < 40) ? 40 : thresholdFiltered;
 				arpCount += thresholdFiltered/40;
 
 			}

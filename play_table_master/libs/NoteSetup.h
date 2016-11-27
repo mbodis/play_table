@@ -15,6 +15,7 @@ class NoteSetup {
 
   	void setupNotes(int idx, MyMidi &mMyMidi){
 
+  		freeExistingSensorsFromMemory();
 
 		switch(idx){
 			case 0: 
@@ -54,7 +55,13 @@ class NoteSetup {
   		// testSetupAcordMultiMode();
   		// testSetupArpeggio();
   		// testSetupMix();
-  	}  	
+  	}
+
+  	void freeExistingSensorsFromMemory(){
+  		for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
+			delete mTableSensors[elc];
+		}
+  	}
 
   	void notesSetup_0_Paanko(){
 

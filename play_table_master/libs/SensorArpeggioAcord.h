@@ -54,11 +54,11 @@ class SensorArpeggioAcord : public Sensor{
 	     * byte thresholdFiltered <2-255>
 	     */
         virtual void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered){
+
 			byte pressure = thresholdFiltered/1.5;
 			if (pressure > 127){
 				pressure = 127;
 			}
-
 
 
 			for (byte note = 0; note < notesCount; note++) {
@@ -91,6 +91,7 @@ class SensorArpeggioAcord : public Sensor{
 			}
 
 			// "thresholdFiltered/10" is increasing faster than "thresholdFiltered/20"
+			thresholdFiltered = (thresholdFiltered < 40) ? 40 : thresholdFiltered;
 			arpCount += thresholdFiltered/40;
 
 			if (arpCount == 255){
