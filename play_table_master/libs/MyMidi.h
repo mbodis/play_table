@@ -1,6 +1,6 @@
 #ifndef MY_MIDI_H
 #define MY_MIDI_H
- 
+
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <MPR121.h>
@@ -80,191 +80,233 @@
 /*
  *some more docs: https://github.com/rkistner/arcore
  */
+const byte MAX_NOTES_TO_PLAY_AT_ONCE = 10;
+
 class MyMidi {
 
-  private:
-      MIDIEvent e;
+	private:
+		MIDIEvent e;
 
-  public:    
-      byte resetMIDI = 8; // Tied to VS1053 Reset line
-      byte velocity = 60;  // midi note velocity for turning on and off
+	public:
+		byte resetMIDI = 8; // Tied to VS1053 Reset line
+		byte velocity = 60;  // midi note velocity for turning on and off
 
-      byte RX = 12;
-      byte TX = 10;
-      SoftwareSerial *mySerial;
-    
+		byte RX = 12;
+		byte TX = 10;
+		SoftwareSerial *mySerial;
 
-    void init(){
+		byte notesOn[ELECTRODES_COUNT][MAX_NOTES_TO_PLAY_AT_ONCE];
 
-        // setup Serial
-        mySerial = new SoftwareSerial(RX, TX);
+		void addNoteToPlayList(byte channel, byte note) {
+			for (byte b = 0; b < MAX_NOTES_TO_PLAY_AT_ONCE; b++) {
+				if (notesOn[channel][b] == 0) {
+					notesOn[channel][b] = note;
+					break;
+				}
+			}
+		}
 
-        // setup midi output
-        midi2UsbSetup();
-     }
+		void removeNoteFromPlayList(byte channel, byte note) {
+			for (byte b = 0; b < MAX_NOTES_TO_PLAY_AT_ONCE; b++) {
+				if (notesOn[channel][b] == note) {
+					notesOn[channel][b] = 0;
+					break;
+				}
+			}
+		}
 
-    /*
-     * Send a MIDI note-on message.  Like pressing a piano key.
-     * channel ranges from 0-15
-     * attack_velocity <1-127>
-     */
-    void noteOn(byte channel, byte note, byte attack_velocity) {        
-        talkMIDI( (0x90 | channel), note, attack_velocity);
-        midi2Usb(0x09, 0x90, note, attack_velocity);
-    }
-  
-    /*
-     * Send a MIDI note-off message.  Like releasing a piano key.
-     * attack_velocity <1-127>
-     */
-    void noteOff(byte channel, byte note, byte release_velocity) {
-        talkMIDI( (0x80 | channel), note, release_velocity);
-        midi2Usb(0x08, 0x80, note, release_velocity);
-    }
-  
-    /*
-     * @svb
-     * channel 0-15
-     * note a value from 0 to 127
-     * pressure amount 0-127 (where 127 is the most pressure)
-     *
-     * NOTE: touchboard si not supporting afterTouch
-     */ 
-    void afterTouch(byte channel, byte note, byte pressure) {
-        midi2Usb(0x0A, 0xA0, note, pressure);
-    }
+		bool isNoteOnPlayList(byte channel, byte note) {
+			for (byte b = 0; b < MAX_NOTES_TO_PLAY_AT_ONCE; b++) {
+				if (notesOn[channel][b] == note) {
+					return true;
+				}
+			}
 
-    /*
-     * @svb
-     * Send a MIDI control-change message. 
-     * channel ranges from 0-15
-     * first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
-     * second data byte is the value to which the controller should be set, a value from 0 to 127.
-     * 
-     * NOTE: not used or tested
-     */
-    void noteControllChange(byte channel, byte controllerNumber, byte set) {
-        talkMIDI( (0xB0 | channel), controllerNumber, set);
-    }
-  
-    /*
-     * @svb
-     * channel 0-15
-     * pressure 0-127
-     * 
-     * NOTE: not used or tested
-     */
-    void channelPressure(byte channel, byte pressure) {
-        talkMIDI( (0xD0 | channel), pressure, 0);
-    }
-  
-    /*
-     * @svb
-     * 
-     */
-    void setVolume(byte channel, byte volume){
-        talkMIDI(0xB0 | channel, 0x07, volume);
-        midi2Usb(0x0B, 0xB0 | channel, 0x07, volume);
-    }
+			return false;
+		}
 
-    // Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,
-    // or that data values are less than 127.
-    void talkMIDI(byte cmd, byte data1, byte data2) {
-        mySerial->write(cmd);
-        mySerial->write(data1);
+		void init() {
 
-        // Some commands only have one data byte. All cmds less than 0xBn have 2 data bytes
-        // (sort of: http://253.ccarh.org/handout/midiprotocol/)
-        if ( (cmd & 0xF0) <= 0xB0)
-            mySerial->write(data2);
-    }
+			// setup Serial
+			mySerial = new SoftwareSerial(RX, TX);
 
-    void midi2UsbSetup(){
-        e.type = 0x08;
-        e.m3 = 127; // max volume
-    }
-  
-    void midi2Usb(byte type, byte command, byte data1, byte data2){
-        e.type = type; // 
-        e.m1 = command; // noteOn / noteOff / pressure / control-change
-        e.m2 = data1; // note value / controller data
-        e.m3 = data2; // data      
+			// empty playing notes array
+			for (byte ch = 0; ch < ELECTRODES_COUNT; ch++) {
+				for (byte b = 0; b < MAX_NOTES_TO_PLAY_AT_ONCE; b++) {
+					notesOn[ch][b] = 0;
+				}
+			}
 
-        MIDIUSB.write(e);
-        // flush USB buffer to ensure all notes are sent
-        MIDIUSB.flush();
-    }
+			// setup midi output
+			midi2UsbSetup();
+		}
 
-    /*
-     * SETTING UP THE INSTRUMENT:
-     * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
-     * below to aid you in selecting your desire instrument from within the respective instrument bank
-     */
-    void setupMidiInit(bool isInicialization) {
-        if (isInicialization){
-            // Setup soft serial for MIDI control
-            mySerial->begin(31250);
+		/*
+		 * Send a MIDI note-on message.  Like pressing a piano key.
+		 * channel ranges from 0-15
+		 * attack_velocity <1-127>
+		 */
+		void noteOn(byte channel, byte note, byte attack_velocity) {
+			addNoteToPlayList(channel, note);
+			talkMIDI( (0x90 | channel), note, attack_velocity);
+			midi2Usb(0x09, 0x90, note, attack_velocity);
+		}
 
-            Wire.begin();
+		/*
+		 * Send a MIDI note-off message.  Like releasing a piano key.
+		 * attack_velocity <1-127>
+		 */
+		void noteOff(byte channel, byte note, byte release_velocity) {
+			removeNoteFromPlayList(channel, note);
+			if (!isNoteOnPlayList(channel, note)) {
+				talkMIDI( (0x80 | channel), note, release_velocity);
+				midi2Usb(0x08, 0x80, note, release_velocity);
+			}
+		}
 
-            // Reset the VS1053
-            pinMode(resetMIDI, OUTPUT);
-            digitalWrite(resetMIDI, LOW);
-            delay(100);
-            digitalWrite(resetMIDI, HIGH);
-            delay(100);
-        }
+		/*
+		 * @svb
+		 * channel 0-15
+		 * note a value from 0 to 127
+		 * pressure amount 0-127 (where 127 is the most pressure)
+		 *
+		 * NOTE: touchboard si not supporting afterTouch
+		 */
+		void afterTouch(byte channel, byte note, byte pressure) {
+			midi2Usb(0x0A, 0xA0, note, pressure);
+		}
 
-        for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
-            setupMidi(elc);
-        }
-    }
+		/*
+		 * @svb
+		 * Send a MIDI control-change message.
+		 * channel ranges from 0-15
+		 * first data is the controller number (0 to 127), indicates which controller is affected by the received MIDI message.
+		 * second data byte is the value to which the controller should be set, a value from 0 to 127.
+		 *
+		 * NOTE: not used or tested
+		 */
+		void noteControllChange(byte channel, byte controllerNumber, byte set) {
+			talkMIDI( (0xB0 | channel), controllerNumber, set);
+		}
 
-    void setupMidi(byte channel) {
-        // set Volume
-        setVolume(channel, 0);    
-        // Bank select: Default bank GM1
-        talkMIDI(0xB0 | channel, 0, 0x00); 
-        // Set instrument number. 79 == Whistle
-        talkMIDI(0xC0 | channel, 79, 0); 
-        setVolume(channel, 127);    
-    }
+		/*
+		 * @svb
+		 * channel 0-15
+		 * pressure 0-127
+		 *
+		 * NOTE: not used or tested
+		 */
+		void channelPressure(byte channel, byte pressure) {
+			talkMIDI( (0xD0 | channel), pressure, 0);
+		}
 
-    /*
-     * SETTING UP THE INSTRUMENT:
-     * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
-     * below to aid you in selecting your desire instrument from within the respective instrument bank
-     */
-    void setupMidiPercussionInit(bool isInicialization) {
-        if (isInicialization){
-            // Setup soft serial for MIDI control
-            mySerial->begin(31250);
+		/*
+		 * @svb
+		 *
+		 */
+		void setVolume(byte channel, byte volume) {
+			talkMIDI(0xB0 | channel, 0x07, volume);
+			midi2Usb(0x0B, 0xB0 | channel, 0x07, volume);
+		}
 
-            Wire.begin();
+		// Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,
+		// or that data values are less than 127.
+		void talkMIDI(byte cmd, byte data1, byte data2) {
+			mySerial->write(cmd);
+			mySerial->write(data1);
 
-            // Reset the VS1053
-            pinMode(resetMIDI, OUTPUT);
-            digitalWrite(resetMIDI, LOW);
-            delay(100);
-            digitalWrite(resetMIDI, HIGH);
-            delay(100);
-        }
+			// Some commands only have one data byte. All cmds less than 0xBn have 2 data bytes
+			// (sort of: http://253.ccarh.org/handout/midiprotocol/)
+			if ( (cmd & 0xF0) <= 0xB0)
+				mySerial->write(data2);
+		}
 
-        for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
-            setupMidiPercussion(elc);
-        }
-    }
-    
-    void setupMidiPercussion(byte channel) {
-        // set volume - don't comment out this code!
-        setVolume(channel, 0); //0xB0 is channel message, set channel volume to max (127)
-        // Bank select: Percussion Instruments (Drums, GM1 + GM2)
-        talkMIDI(0xB0 | channel, 0, 0x78); 
-        // Set a dummy instrument number
-        talkMIDI(0xC0 | channel, 0, 36); 
-        setVolume(channel, 127); //0xB0 is channel message, set channel volume to max (127)
-    }
-  
+		void midi2UsbSetup() {
+			e.type = 0x08;
+			e.m3 = 127; // max volume
+		}
+
+		void midi2Usb(byte type, byte command, byte data1, byte data2) {
+			e.type = type; //
+			e.m1 = command; // noteOn / noteOff / pressure / control-change
+			e.m2 = data1; // note value / controller data
+			e.m3 = data2; // data
+
+			MIDIUSB.write(e);
+			// flush USB buffer to ensure all notes are sent
+			MIDIUSB.flush();
+		}
+
+		/*
+		 * SETTING UP THE INSTRUMENT:
+		 * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
+		 * below to aid you in selecting your desire instrument from within the respective instrument bank
+		 */
+		void setupMidiInit(bool isInicialization) {
+			if (isInicialization) {
+				// Setup soft serial for MIDI control
+				mySerial->begin(31250);
+
+				Wire.begin();
+
+				// Reset the VS1053
+				pinMode(resetMIDI, OUTPUT);
+				digitalWrite(resetMIDI, LOW);
+				delay(100);
+				digitalWrite(resetMIDI, HIGH);
+				delay(100);
+			}
+
+			for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
+				setupMidi(elc);
+			}
+		}
+
+		void setupMidi(byte channel) {
+			// set Volume
+			setVolume(channel, 0);
+			// Bank select: Default bank GM1
+			talkMIDI(0xB0 | channel, 0, 0x00);
+			// Set instrument number. 79 == Whistle
+			talkMIDI(0xC0 | channel, 79, 0);
+			setVolume(channel, 127);
+		}
+
+		/*
+		 * SETTING UP THE INSTRUMENT:
+		 * The below function "setupMidi()" is where the instrument bank is defined. Use the VS1053 instrument library
+		 * below to aid you in selecting your desire instrument from within the respective instrument bank
+		 */
+		void setupMidiPercussionInit(bool isInicialization) {
+			if (isInicialization) {
+				// Setup soft serial for MIDI control
+				mySerial->begin(31250);
+
+				Wire.begin();
+
+				// Reset the VS1053
+				pinMode(resetMIDI, OUTPUT);
+				digitalWrite(resetMIDI, LOW);
+				delay(100);
+				digitalWrite(resetMIDI, HIGH);
+				delay(100);
+			}
+
+			for (byte elc = 0; elc < ELECTRODES_COUNT; elc++) {
+				setupMidiPercussion(elc);
+			}
+		}
+
+		void setupMidiPercussion(byte channel) {
+			// set volume - don't comment out this code!
+			setVolume(channel, 0); //0xB0 is channel message, set channel volume to max (127)
+			// Bank select: Percussion Instruments (Drums, GM1 + GM2)
+			talkMIDI(0xB0 | channel, 0, 0x78);
+			// Set a dummy instrument number
+			talkMIDI(0xC0 | channel, 0, 36);
+			setVolume(channel, 127); //0xB0 is channel message, set channel volume to max (127)
+		}
+
 };
 
 #endif
