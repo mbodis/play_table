@@ -21,13 +21,16 @@
 #include <SensorAcord.h>
 #include <SensorMultiAcord.h>
 #include <SensorArpeggio.h>
+#include <SensorArpeggioCombi.h>
+#include <SensorArpeggioAuto.h>
 #include <SensorArpeggioAcord.h>
-#include <NoteSetup.h>
 #include <NoteGroup.h>
-#include <MyTable.h>
-#include <TouchSensors.h>
+#include <NoteSetup.h>
 #include <MyCommunicator.h>
 #include <VisualEffects.h>
+#include <MyTable.h>
+#include <TouchSensors.h>
+
 
 /* 
   CLASS DEFINITION
@@ -35,9 +38,8 @@
 MyMidi mMyMidi;
 Themerin mThemerin;
 MyTable mMyTable;
-MyCommunicator mMyCommunicator;
 TouchSensors mTouchSensors;
-VisualEffects mVisualEffects;
+
 
 /*
    MAIN - SETUP
@@ -64,7 +66,7 @@ void setup() {
   mMyMidi.setupMidiInit(true);
 
   // do some initial led effect
-  mVisualEffects.initScreenSaver(mMyTable);  
+  VisualEffects::initScreenSaver();  
 }
 
 /*
