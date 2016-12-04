@@ -1,14 +1,13 @@
-#ifndef SENSORARPEGGIO_H
-#define SENSORARPEGGIO_H
+#ifndef SENSORARPEGGIOAUTO_H
+#define SENSORARPEGGIOAUTO_H
 
 #include <Arduino.h>
-
 
 /*
  * arpeggio
  * toggle between tones, increase tempo by distance
  */
-class SensorArpeggio : public Sensor {
+class SensorArpeggioAuto : public Sensor {
 	private:
 		// arpeggio counter
 		byte arpCount = 0;
@@ -36,7 +35,7 @@ class SensorArpeggio : public Sensor {
 		 * notesArr <byte[]> - array of note values
 		 *
 		 */
-		SensorArpeggio(byte id, byte notesCount, byte notesArr[]): Sensor(id, TONE_MODE_ARPEGGIO, id) {
+		SensorArpeggioAuto(byte id, byte notesCount, byte notesArr[]): Sensor(id, TONE_MODE_ARPEGGIO, id) {
 
 			this->notesCount = notesCount;
 
@@ -44,13 +43,22 @@ class SensorArpeggio : public Sensor {
 				notesValueMulti[i] = notesArr[i];
 				noteIsOnMulti[i] = false;
 			}
+			setAutoMode(true);
+			setLooping(false);
+
 		}
 
-		virtual void sensorOff(MyMidi &mMyMidi) {
+		virtual void sensorQuiet(MyMidi &mMyMidi) {
 			for (byte note = 0; note < notesCount; note++) {
 				noteIsOnMulti[note] = false;
 				mMyMidi.noteOff(getChannel(), notesValueMulti[note], mMyMidi.velocity);
 			}
+		}
+
+		virtual void sensorOff(MyMidi &mMyMidi) {
+			sensorQuiet(mMyMidi);
+			setLooping(false);
+			tempo = DEFAULT_TEMPO;
 		}
 
 		/*
@@ -60,6 +68,14 @@ class SensorArpeggio : public Sensor {
 		 */
 		virtual void playNote(MyMidi &mMyMidi, byte thresholdRaw, byte thresholdFiltered) {
 
+			// hand is placed on the sensor - this is wrong behavior
+			if (userTouchSensorLocked > 0
+			        && thresholdFiltered >= 253) {
+				sensorQuiet(mMyMidi);
+				return;
+			}
+
+			// sensor has just changed autoMode - wait
 			if (userTouchSensorLocked > 0) {
 				userTouchSensorLocked--;
 				return;
@@ -68,10 +84,7 @@ class SensorArpeggio : public Sensor {
 			for (byte note = 0; note < notesCount; note++) {
 				bool inRange = false;
 
-				// if too close just play acord
-				// if (thresholdFiltered > 235) inRange = true;
-
-				if (thresholdRaw > 2) {
+				if (isLoopingEnabled()) {
 
 					// play only one note at time
 					if ((arpCount > (note * (255 / notesCount)))
@@ -84,32 +97,38 @@ class SensorArpeggio : public Sensor {
 				// note ON
 				if (noteIsOnMulti[note] == false && inRange) {
 					noteIsOnMulti[note] = true;
-					mMyMidi.noteOn(0, notesValueMulti[note], mMyMidi.velocity);
+					mMyMidi.noteOn(getChannel(), notesValueMulti[note], mMyMidi.velocity);
 
 					// note OFF
 				}
 				else if (noteIsOnMulti[note] == true && !inRange) {
 					noteIsOnMulti[note] = false;
-					mMyMidi.noteOff(0, notesValueMulti[note], mMyMidi.velocity);
+					mMyMidi.noteOff(getChannel(), notesValueMulti[note], mMyMidi.velocity);
 				}
 			}
 
-			if (thresholdRaw <= 2 ) {
-				arpCount = 0;
+			if (thresholdFiltered >= 253 && userTouchSensorLocked == 0) {
+				setLooping(!isLoopingEnabled());
+				userTouchSensorLocked = USER_TOUCH_LOCK_LIMIT;
+
+				if (!isLoopingEnabled()) {
+					sensorOff(mMyMidi);
+				}
 			}
 
-			// "thresholdFiltered/10" is increasing faster than "thresholdFiltered/20"
-			// thresholdFiltered/40 - best
-			thresholdFiltered = (thresholdFiltered < 40) ? 40 : thresholdFiltered;
-			arpCount += thresholdFiltered / 40;
+			// if loop is ON
+			if (isLoopingEnabled()) {
+				arpCount += tempo / 40;
+
+			}
+			// if loop is OFF
+			else {
+				arpCount = 0;
+			}
 
 			if (arpCount == 255) {
 				arpCount = 0;
 			}
-		}
-
-		byte getArpCount() {
-			return arpCount;
 		}
 
 };
