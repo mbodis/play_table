@@ -22,6 +22,8 @@ class SensorArpeggioAcord : public Sensor {
 		// total notes count
 		byte notesCount;
 
+		byte tempoLimit;
+
 	public:
 
 		/*
@@ -38,6 +40,8 @@ class SensorArpeggioAcord : public Sensor {
 				notesValue[i] = notesArr[i];
 				noteIsOn[i] = false;
 			}
+
+			tempoLimit = notesCount * (255 / notesCount);
 		}
 
 
@@ -95,8 +99,8 @@ class SensorArpeggioAcord : public Sensor {
 			thresholdFiltered = (thresholdFiltered < 40) ? 40 : thresholdFiltered;
 			arpCount += thresholdFiltered / 40;
 
-			if (arpCount == 255) {
-				arpCount = 0;
+			if (arpCount >= tempoLimit) {
+				arpCount = arpCount%tempoLimit;
 			}
 		}
 

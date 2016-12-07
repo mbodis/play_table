@@ -10,7 +10,7 @@
 class SensorArpeggioAuto : public Sensor {
 	private:
 		// arpeggio counter
-		byte arpCount = 0;
+		int arpCount = 0;
 
 		// bool arr to know what note is on
 		bool noteIsOnMulti[18];
@@ -27,6 +27,7 @@ class SensorArpeggioAuto : public Sensor {
 		byte lastDistanceSensorValuesIdx = 0;
 		byte userTouchSensorLocked = 0;
 
+		byte tempoLimit;
 	public:
 
 		/*
@@ -45,6 +46,8 @@ class SensorArpeggioAuto : public Sensor {
 			}
 			setAutoMode(true);
 			setLooping(false);
+
+			tempoLimit = notesCount * (255 / notesCount);
 
 		}
 
@@ -87,7 +90,7 @@ class SensorArpeggioAuto : public Sensor {
 				if (isLoopingEnabled()) {
 
 					// play only one note at time
-					if ((arpCount > (note * (255 / notesCount)))
+					if ((arpCount >= (note * (255 / notesCount)))
 					        && (arpCount < ((note + 1) * (255 / notesCount))) ) {
 						inRange = true;
 
@@ -126,9 +129,10 @@ class SensorArpeggioAuto : public Sensor {
 				arpCount = 0;
 			}
 
-			if (arpCount == 255) {
-				arpCount = 0;
+			if (arpCount >= tempoLimit) {
+				arpCount = arpCount%tempoLimit;
 			}
+
 		}
 
 };

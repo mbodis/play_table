@@ -28,6 +28,8 @@ class SensorArpeggio : public Sensor {
 		byte lastDistanceSensorValuesIdx = 0;
 		byte userTouchSensorLocked = 0;
 
+		byte tempoLimit;
+
 	public:
 
 		/*
@@ -44,6 +46,8 @@ class SensorArpeggio : public Sensor {
 				notesValueMulti[i] = notesArr[i];
 				noteIsOnMulti[i] = false;
 			}
+
+			tempoLimit = notesCount * (255 / notesCount);
 		}
 
 		virtual void sensorOff(MyMidi &mMyMidi) {
@@ -103,8 +107,8 @@ class SensorArpeggio : public Sensor {
 			thresholdFiltered = (thresholdFiltered < 40) ? 40 : thresholdFiltered;
 			arpCount += thresholdFiltered / 40;
 
-			if (arpCount == 255) {
-				arpCount = 0;
+			if (arpCount >= tempoLimit) {
+				arpCount = arpCount%tempoLimit;
 			}
 		}
 

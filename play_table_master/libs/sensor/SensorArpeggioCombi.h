@@ -27,6 +27,8 @@ class SensorArpeggioCombi : public Sensor {
 		byte lastDistanceSensorValuesIdx = 0;
 		byte userTouchSensorLocked = 0;
 
+		byte tempoLimit;
+
 	public:
 
 		/*
@@ -47,6 +49,8 @@ class SensorArpeggioCombi : public Sensor {
 			setLooping(false);
 
 			resetSensorDistanceValues();
+
+			tempoLimit = notesCount * (255 / notesCount);
 		}
 
 		virtual void sensorQuiet(MyMidi &mMyMidi) {
@@ -148,8 +152,8 @@ class SensorArpeggioCombi : public Sensor {
 
 			}
 
-			if (arpCount == 255) {
-				arpCount = 0;
+			if (arpCount >= tempoLimit) {
+				arpCount = arpCount%tempoLimit;
 			}
 		}
 
