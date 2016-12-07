@@ -1,7 +1,7 @@
 /*******************************************************************************
 
   created: 2016-03-26
-  modified: 2016-11-25
+  modified: 2016-12-07
   Miroslav Bodis - play table - master
 
   MIDI docs:
@@ -15,6 +15,8 @@
 #include <Constants.h>
 #include <MyMidi.h>
 #include <Themerin.h>
+#include <AutoMode.h>
+#include <DynamicMode.h>
 #include <Sensor.h>
 #include <SensorSingle.h>
 #include <SensorMulti.h>

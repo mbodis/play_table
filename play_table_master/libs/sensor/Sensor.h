@@ -6,45 +6,37 @@
 /*
  * Abstract class for sensor
  */
-class Sensor {
+class Sensor : public AutoMode, public DynamicMode {
 	private:
 		byte sensorId = -1;
 		byte mode = -1;
 		byte channel = 0;
 		byte volume = 0;
 
-		// auto mode
-		bool autoMode = false;
-		bool loopingIsOn = false;
-
-		// dynamic mode
-		bool dynamicMode = false;
-
 	public:
 
-		Sensor(byte sensorId, byte mode, byte channel, bool mDynamicMode = false) {
+		Sensor(byte sensorId, byte mode, byte channel, bool dynamicMode = false): AutoMode(), DynamicMode(dynamicMode) {
 			this->sensorId = sensorId;
 			this->mode = mode;
 			this->channel = channel;
-			this->dynamicMode = mDynamicMode;
 		}
 
 		virtual void sensorOff(MyMidi&);
 		virtual void playNote(MyMidi&, byte, byte);
 
 		byte getVolume() {
-			return volume;
+			return this->volume;
 		}
 
-		void setVolume(byte mVolume) {
-			volume = mVolume;
+		void setVolume(byte volume) {
+			this->volume = volume;
 		}
 
 		/*
 		 * toggle note setup helper for visualization
 		 */
 		byte getSensorId() {
-			return sensorId;
+			return this->sensorId;
 		}
 
 		byte visualLedsHelper = 0;
@@ -83,25 +75,6 @@ class Sensor {
 			}
 		}
 
-		bool hasAutoMode() {
-			return autoMode;
-		}
-
-		void setAutoMode(bool loopModeVal) {
-			autoMode = loopModeVal;
-		}
-
-		bool isLoopingEnabled() {
-			return loopingIsOn;
-		}
-
-		void setLooping(bool loopState) {
-			loopingIsOn = loopState;
-		}
-
-		bool isDynamicModeEnable() {
-			return dynamicMode;
-		}
 };
 
 

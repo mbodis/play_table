@@ -1,5 +1,5 @@
-#ifndef MY_COMMUNICATOR_H
-#define MY_COMMUNICATOR_H
+#ifndef TEST_MY_COMMUNICATOR_H
+#define TEST_MY_COMMUNICATOR_H
 
 #include <Arduino.h>
 
@@ -20,21 +20,15 @@
 **********************
 
 */
-class MyCommunicator {
+
+/*
+ * testing communication
+ */
+class TestMyCommunicator {
 
 	public:
 
-		static void sendMessageToSlave(byte idSlave, byte valueSlave) {
-			Serial1.write(PROTOCOL_ID_DELIMETER);
-			Serial1.write(idSlave);
-			Serial1.write(PROTOCOL_VALUE_DELIMETER);
-			Serial1.write(valueSlave);
-		}
-
-		/*
-		 * testing communication
-		 */
-		// testing
+		testing
 		byte testNumber = 0;
 		byte testNumber2 = 128;
 
