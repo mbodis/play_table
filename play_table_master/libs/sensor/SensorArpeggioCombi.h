@@ -13,10 +13,10 @@ class SensorArpeggioCombi : public Sensor {
 		byte arpCount = 0;
 
 		// bool arr to know what note is on
-		bool noteIsOnMulti[18];
+		bool noteIsOnMulti[42];
 
 		// current selected note setup
-		byte notesValueMulti[18];
+		byte notesValueMulti[42];
 
 		// total number of notes
 		byte notesCount;

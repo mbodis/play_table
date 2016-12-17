@@ -33,7 +33,8 @@ class NoteSetup {
 			case 3:
 				mMyMidi.setupMidiInit(false);
 				noteSetup_4_Arpeggio(mTableSensors);
-				setGroup_3_4(mNoteGroup);
+				// setGroup_3_4(mNoteGroup);
+				noGroup(mNoteGroup);
 				break;
 
 			case 4:
@@ -121,16 +122,16 @@ class NoteSetup {
 			mTableSensors[ID] = new SensorMultiAcord(ID, 3, 4, arr_0, 3, THRESHOLD_LEVEL_0);
 
 			ID = 1;
-			// byte arr2[] = {57, 60, 64, 67};
-			// mTableSensors[ID] = new SensorAcord(ID, 4, arr2);
-			byte THRESHOLD_LEVEL_2[] = {20, 120};
+			// byte arr1[] = {57, 60, 64, 67};
+			// mTableSensors[ID] = new SensorAcord(ID, 4, arr1);
+			byte THRESHOLD_LEVEL_1[] = {20, 120};
 			byte arr_2[2][4] = { {57, 60, 64, 67}, {69, 72, 76, 79}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 2, 4, arr_2, 2, THRESHOLD_LEVEL_2);
+			mTableSensors[ID] = new SensorMultiAcord(ID, 2, 4, arr_2, 2, THRESHOLD_LEVEL_1);
 
 			ID = 2;
-			byte THRESHOLD_LEVEL_1[] = {20, 33, 46, 59, 72, 85, 98, 111, 124, 137, 150, 163, 176, 189, 202, 215, 228, 241};
+			byte THRESHOLD_LEVEL_2[] = {20, 33, 46, 59, 72, 85, 98, 111, 124, 137, 150, 163, 176, 189, 202, 215, 228, 241};
 			byte arr_1[] = {62, 64, 67, 69, 71, 72, 74, 76, 79, 81, 83, 84, 86, 88, 91, 93, 95, 96};
-			mTableSensors[ID] = new SensorMulti(ID, 18, arr_1, 18, THRESHOLD_LEVEL_1);
+			mTableSensors[ID] = new SensorMulti(ID, 18, arr_1, 18, THRESHOLD_LEVEL_2);
 
 
 			ID = 3;
@@ -148,16 +149,18 @@ class NoteSetup {
 
 		static void noteSetup_4_Arpeggio(Sensor *mTableSensors[]) {
 			byte ID = 0;
-			byte arr_0[] = {53, 57, 60, 64, 65, 69, 72, 76, 72, 69, 65, 64, 60, 57};
-			mTableSensors[ID] = new SensorArpeggioAuto(ID, 14, arr_0);
+			// byte arr_0[] = {53, 57, 60, 64, 65, 69, 72, 76, 72, 69, 65, 64, 60, 57};
+			// mTableSensors[ID] = new SensorArpeggioAuto(ID, 14, arr_0);
+			byte arr_0[] = {53, 57, 60, 64, 65, 69, 72, 76, 72, 69, 65, 64, 60, 57, 58, 62, 65, 69, 70, 74, 77, 81, 77, 74, 70, 69, 65, 62, 56, 60, 63, 67, 68, 72, 75, 79, 75, 72, 68, 67, 63, 60};
+			mTableSensors[ID] = new SensorArpeggio(ID, 42, arr_0);
 
 			ID = 1;
 			byte arr_1[] = {58, 62, 65, 69, 70, 74, 77, 81, 77, 74, 70, 69, 65, 62};
-			mTableSensors[ID] = new SensorArpeggioAuto(ID, 14, arr_1);
+			mTableSensors[ID] = new SensorArpeggio(ID, 14, arr_1);
 
 			ID = 2;
 			byte arr_2[] = {56, 60, 63, 67, 68, 72, 75, 79, 75, 72, 68, 67, 63, 60};
-			mTableSensors[ID] = new SensorArpeggioAuto(ID, 14, arr_2);
+			mTableSensors[ID] = new SensorArpeggio(ID, 14, arr_2);
 
 			ID = 3;
 			mTableSensors[ID] = new SensorSingle(ID, 84, true);

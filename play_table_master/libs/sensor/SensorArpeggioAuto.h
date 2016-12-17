@@ -13,10 +13,10 @@ class SensorArpeggioAuto : public Sensor {
 		int arpCount = 0;
 
 		// bool arr to know what note is on
-		bool noteIsOnMulti[18];
+		bool noteIsOnMulti[42];
 
 		// current selected note setup
-		byte notesValueMulti[18];
+		byte notesValueMulti[42];
 
 		// total number of notes
 		byte notesCount;
@@ -110,7 +110,10 @@ class SensorArpeggioAuto : public Sensor {
 				}
 			}
 
-			if (thresholdFiltered >= 253 && userTouchSensorLocked == 0) {
+			// hover to start, touch to exit
+			if ( (thresholdFiltered >= 5 && !isLoopingEnabled())
+				|| (thresholdFiltered >= 253 && userTouchSensorLocked == 0) ){
+				arpCount = 0;
 				setLooping(!isLoopingEnabled());
 				userTouchSensorLocked = USER_TOUCH_LOCK_LIMIT;
 

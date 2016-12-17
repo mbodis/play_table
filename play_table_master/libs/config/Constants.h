@@ -63,6 +63,6 @@ const byte ELECTRODES_ARR[ELECTRODES_COUNT] = {
  */
 const byte HAND_DISATNCE_SAVED_VALUES = 11;
 const byte USER_TOUCH_LOCK_LIMIT = 15;
-const byte DEFAULT_TEMPO = 115;
+const byte DEFAULT_TEMPO = 65; // 115
 
 #endif

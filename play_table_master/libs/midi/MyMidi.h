@@ -206,7 +206,7 @@ class MyMidi {
 		 */
 		void setVolume(byte channel, byte volume) {
 			talkMIDI(0xB0 | channel, 0x07, volume);
-			midi2Usb(0x0B, 0xB0 | channel, 0x07, volume);
+			// midi2Usb(0x0B, 0xB0 | channel, 0x07, volume);
 		}
 
 		// Sends a generic MIDI message. Doesn't check to see that cmd is greater than 127,

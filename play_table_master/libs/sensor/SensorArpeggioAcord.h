@@ -14,10 +14,10 @@ class SensorArpeggioAcord : public Sensor {
 		byte arpCount = 0;
 
 		// bool arr to know what note is on
-		bool noteIsOn[18];
+		bool noteIsOn[42];
 
 		// current selected note setup
-		byte notesValue[18];
+		byte notesValue[42];
 
 		// total notes count
 		byte notesCount;

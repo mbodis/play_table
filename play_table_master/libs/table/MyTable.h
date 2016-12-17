@@ -49,6 +49,7 @@ class MyTable {
 			int volume = analogRead(PIN_KNOB_VOLUME);
 			volume = abs(1000 - volume) / 8;
 
+			int vv = 0;
 			// Serial.print("volume:");
 			// Serial.println(volume);
 
@@ -56,7 +57,7 @@ class MyTable {
 
 				if (mTableSensors[elc]->isDynamicModeEnable()) {
 					if (mTableSensors[elc]->getMode() == TONE_MODE_SINGLE) {
-						int vv = (volume - 15) + (mTableSensors[elc]->getVolume() / 6);
+						vv = (volume - 15) + (mTableSensors[elc]->getVolume() / 6);
 						if (vv <= 0) vv = 1;
 						if (vv > 127) vv = 127;
 
@@ -65,12 +66,14 @@ class MyTable {
 					}
 					else if (mTableSensors[elc]->getMode() == TONE_MODE_ACORD) {
 
-						int vv = (volume - 20) + (mTableSensors[elc]->getVolume() / 4);
+						vv = (volume - 20) + (mTableSensors[elc]->getVolume() / 4);
 						if (vv <= 0) vv = 1;
 						if (vv > 127) vv = 127;
 
 						mMyMidi.setVolume(elc, vv);
 
+					}else{
+						mMyMidi.setVolume(elc, mTableSensors[elc]->getVolume());
 					}
 				}
 				else {
