@@ -46,8 +46,8 @@ class NoteSetup {
 
 			// testSetupSingle(mTableSensors);
 			// testMultiMode(mTableSensors);
-			// testAcordMode(mTableSensors);
-			// testSetupAcordMultiMode(mTableSensors);
+			// testChordMode(mTableSensors);
+			// testSetupChordMultiMode(mTableSensors);
 			// testSetupArpeggio(mTableSensors);
 			// testSetupMix(mTableSensors);
 			// noGroup(mNoteGroup);
@@ -63,15 +63,15 @@ class NoteSetup {
 
 			byte ID = 0;
 			byte arr0[] = {52, 55, 59, 62};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr0);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr0);
 
 			ID = 1;
 			byte arr1[] = {55, 59, 62, 64};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr1);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr1);
 
 			ID = 2;
 			byte arr2[] = {57, 61, 64, 67};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr2);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr2);
 
 			ID = 3;
 			mTableSensors[ID] = new SensorSingle(ID, 71, false);
@@ -89,11 +89,11 @@ class NoteSetup {
 		static void noteSetup_1_Arabic(Sensor *mTableSensors[]) {
 			byte ID = 0;
 			byte arr_1[] = {50, 62, 63, 66, 69};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr_1);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr_1);
 
 			ID = 1;
 			byte arr_2[] = {51, 67, 70, 72, 74};
-			mTableSensors[ID] = new SensorAcord(ID, 5, arr_2);
+			mTableSensors[ID] = new SensorChord(ID, 5, arr_2);
 
 			ID = 2;
 			byte THRESHOLD_LEVEL_0[] = {10, 40, 70, 100, 130, 160, 190, 220};
@@ -116,17 +116,17 @@ class NoteSetup {
 		static void noteSetup_3_D_mol(Sensor *mTableSensors[]) {
 			byte ID = 0;
 			// byte arr0[] = {50, 53, 57, 60};
-			// mTableSensors[ID] = new SensorAcord(ID, 4, arr0);
+			// mTableSensors[ID] = new SensorChord(ID, 4, arr0);
 			byte THRESHOLD_LEVEL_0[] = {20, 120, 180};
 			byte arr_0[3][4] = {{50, 53, 57, 60}, {57, 60, 62, 65}, {62, 65, 69, 72}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 3, 4, arr_0, 3, THRESHOLD_LEVEL_0);
+			mTableSensors[ID] = new SensorMultiChord(ID, 3, 4, arr_0, 3, THRESHOLD_LEVEL_0);
 
 			ID = 1;
 			// byte arr1[] = {57, 60, 64, 67};
-			// mTableSensors[ID] = new SensorAcord(ID, 4, arr1);
+			// mTableSensors[ID] = new SensorChord(ID, 4, arr1);
 			byte THRESHOLD_LEVEL_1[] = {20, 120};
 			byte arr_2[2][4] = { {57, 60, 64, 67}, {69, 72, 76, 79}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 2, 4, arr_2, 2, THRESHOLD_LEVEL_1);
+			mTableSensors[ID] = new SensorMultiChord(ID, 2, 4, arr_2, 2, THRESHOLD_LEVEL_1);
 
 			ID = 2;
 			byte THRESHOLD_LEVEL_2[] = {20, 33, 46, 59, 72, 85, 98, 111, 124, 137, 150, 163, 176, 189, 202, 215, 228, 241};
@@ -314,54 +314,54 @@ class NoteSetup {
 			mTableSensors[ID] = new SensorMulti(ID, 3, arr6, 3, THRESHOLD_LEVEL);
 		}
 
-		static void testAcordMode(Sensor *mTableSensors[]) {
+		static void testChordMode(Sensor *mTableSensors[]) {
 			byte ID = 0;
 			byte arr0[] = {52, 55, 59, 62};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr0);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr0);
 
 			ID = 1;
 			byte arr1[] = {55, 59, 62, 64};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr1);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr1);
 
 			ID = 2;
 			byte arr2[] = {57, 61, 64, 67};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr2);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr2);
 
 			ID = 3;
 			byte arr3[] = {64, 64, 64, 64};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr3);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr3);
 
 			ID = 4;
 			byte arr4[] = {67, 67, 67, 67};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr4);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr4);
 
 			ID = 5;
 			byte arr5[] = {69, 69, 69, 69};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr5);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr5);
 
 			ID = 6;
 			byte arr6[] = {71, 71, 71, 71};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr6);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr6);
 		}
 
-		static void testSetupAcordMultiMode(Sensor *mTableSensors[]) {
+		static void testSetupChordMultiMode(Sensor *mTableSensors[]) {
 			byte ID = 0;
-			// acord multi mode - 3 acords, 5 notes
+			// chord multi mode - 3 chords, 5 notes
 			byte THRESHOLD_LEVEL_0[] = {20, 60, 120};
 			byte arr_0[3][5] = { {50, 62, 63, 66, 69}, {51, 67, 70, 72, 74}, {50, 62, 63, 66, 69}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 3, 5, arr_0, 3, THRESHOLD_LEVEL_0);
+			mTableSensors[ID] = new SensorMultiChord(ID, 3, 5, arr_0, 3, THRESHOLD_LEVEL_0);
 
-			// acord multi mode - 2 acords, 5 notes
+			// chord multi mode - 2 chords, 5 notes
 			ID = 1;
 			byte THRESHOLD_LEVEL_1[] = {20, 120};
 			byte arr_1[2][5] = { {50, 62, 63, 66, 69}, {51, 67, 70, 72, 74}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 2, 5, arr_1, 2, THRESHOLD_LEVEL_1);
+			mTableSensors[ID] = new SensorMultiChord(ID, 2, 5, arr_1, 2, THRESHOLD_LEVEL_1);
 
-			// acord multi mode - 3 acords, 4 notes
+			// chord multi mode - 3 chords, 4 notes
 			ID = 2;
 			byte THRESHOLD_LEVEL_2[] = {20, 60, 120};
 			byte arr_2[3][4] = { {50, 62, 63, 66}, {51, 67, 70, 72}, {50, 62, 63, 66}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 3, 4, arr_2, 3, THRESHOLD_LEVEL_2);
+			mTableSensors[ID] = new SensorMultiChord(ID, 3, 4, arr_2, 3, THRESHOLD_LEVEL_2);
 
 			ID = 3; // not set
 			ID = 4; // not set
@@ -376,7 +376,7 @@ class NoteSetup {
 
 			ID = 1;
 			byte arr_1[] = {50, 62, 63, 66, 69};
-			mTableSensors[ID] = new SensorArpeggioAcord(ID, 5, arr_1);
+			mTableSensors[ID] = new SensorArpeggioChord(ID, 5, arr_1);
 
 			ID = 2;
 			byte arr_2[] = {50, 62, 63, 66, 69};
@@ -406,26 +406,26 @@ class NoteSetup {
 			byte arr2[] = {74, 76, 77};
 			mTableSensors[ID] = new SensorMulti(ID, 3, arr2, 3, THRESHOLD_LEVEL_2);
 
-			// acord mode
+			// chord mode
 			ID = 3;
 			byte arr3[] = {57, 61, 64, 67};
-			mTableSensors[ID] = new SensorAcord(ID, 4, arr3);
+			mTableSensors[ID] = new SensorChord(ID, 4, arr3);
 
-			// acord multi mode
+			// chord multi mode
 			ID = 4;
 			byte AMM_THRESHOLD_LEVEL_4[] = {20, 60, 120};
 			byte arr4[3][5] = { {48, 50, 52, 48, 48}, {57, 61, 64, 67, 67}, {59, 60, 62, 59, 59}};
-			mTableSensors[ID] = new SensorMultiAcord(ID, 3, 5, arr4, 3, AMM_THRESHOLD_LEVEL_4);
+			mTableSensors[ID] = new SensorMultiChord(ID, 3, 5, arr4, 3, AMM_THRESHOLD_LEVEL_4);
 
 			// arpeggio mode
 			ID = 5;
 			byte arr5[] = {50, 62, 63, 66, 69};
 			mTableSensors[ID] = new SensorArpeggio(ID, 5, arr5);
 
-			// arpeggio acord mode
+			// arpeggio chord mode
 			ID = 6;
 			byte arr6[] = {50, 62, 63, 66, 69};
-			mTableSensors[ID] = new SensorArpeggioAcord(ID, 5, arr6);
+			mTableSensors[ID] = new SensorArpeggioChord(ID, 5, arr6);
 		}
 
 };

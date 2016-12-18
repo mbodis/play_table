@@ -1,19 +1,19 @@
-#ifndef SENSORACORD_H
-#define SENSORACORD_H
+#ifndef SENSORCHORD_H
+#define SENSORCHORD_H
 
 #include <Arduino.h>
 
 /*
- * acord
+ * chord
  * play multiple tones anytime sensor range is reached
  */
-class SensorAcord : public Sensor {
+class SensorChord : public Sensor {
 	private:
 		// to know if note is on
-		bool noteIsOnAcord = false;
+		bool noteIsOnChord = false;
 
 		// arr of note values
-		byte noteValueAcord[6];
+		byte noteValues[6];
 
 		// number of notes
 		byte notesCount;
@@ -26,19 +26,19 @@ class SensorAcord : public Sensor {
 		 * notesArr <byte[]> - array of note values
 		 *
 		 */
-		SensorAcord(byte id, byte notesSize, byte notesArr[]): Sensor(id, TONE_MODE_ACORD, id) {
-			noteIsOnAcord = false;
+		SensorChord(byte id, byte notesSize, byte notesArr[]): Sensor(id, TONE_MODE_CHORD, id) {
+			noteIsOnChord = false;
 			notesCount = notesSize;
 			for (byte i = 0; i < notesCount; i++) {
-				noteValueAcord[i] = notesArr[i];
+				noteValues[i] = notesArr[i];
 			}
 		}
 
 		virtual void sensorOff(MyMidi &mMyMidi) {
 			for (byte note = 0; note < notesCount; note++) {
-				mMyMidi.noteOff(getChannel(), noteValueAcord[note], mMyMidi.velocity);
+				mMyMidi.noteOff(getChannel(), noteValues[note], mMyMidi.velocity);
 			}
-			noteIsOnAcord = false;
+			noteIsOnChord = false;
 		}
 
 		/*
@@ -55,25 +55,25 @@ class SensorAcord : public Sensor {
 			setVolume(pressure);
 
 			// note ON
-			if (noteIsOnAcord == false && thresholdRaw > 2) {
-				noteIsOnAcord = true;
+			if (noteIsOnChord == false && thresholdRaw > 2) {
+				noteIsOnChord = true;
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOn(getChannel(), noteValueAcord[note], mMyMidi.velocity);
+					mMyMidi.noteOn(getChannel(), noteValues[note], mMyMidi.velocity);
 				}
 
 				// note OFF
 			}
-			else if (noteIsOnAcord == true && thresholdRaw < 2) {
-				noteIsOnAcord = false;
+			else if (noteIsOnChord == true && thresholdRaw < 2) {
+				noteIsOnChord = false;
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOff(getChannel(), noteValueAcord[note], mMyMidi.velocity);
+					mMyMidi.noteOff(getChannel(), noteValues[note], mMyMidi.velocity);
 				}
 			}
 
 			// note pressure
-			// if (noteIsOnAcord == true){
+			// if (noteIsOnChord == true){
 			// 	for (byte note = 0; note < notesCount; note++) {
-			// 		mMyMidi.afterTouch(getChannel(), noteValueAcord[note], pressure);
+			// 		mMyMidi.afterTouch(getChannel(), noteValues[note], pressure);
 			// 	}
 			// }
 

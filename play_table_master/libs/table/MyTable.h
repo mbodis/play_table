@@ -64,7 +64,7 @@ class MyTable {
 						mMyMidi.setVolume(elc, vv);
 
 					}
-					else if (mTableSensors[elc]->getMode() == TONE_MODE_ACORD) {
+					else if (mTableSensors[elc]->getMode() == TONE_MODE_CHORD) {
 
 						vv = (volume - 20) + (mTableSensors[elc]->getVolume() / 4);
 						if (vv <= 0) vv = 1;
@@ -97,7 +97,7 @@ class MyTable {
 		}
 
 		/*
-		 * acord and multi note mode
+		 * chord and multi note mode
 		 */
 		void setMidiNotesByPotentiometer(MyMidi &mMyMidi) {
 			// v == <44, 922>

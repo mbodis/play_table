@@ -1,17 +1,17 @@
-#ifndef SENSORMULTIACORD_H
-#define SENSORMULTIACORD_H
+#ifndef SENSORMULTICHORD_H
+#define SENSORMULTICHORD_H
 
 #include <Arduino.h>
 
 /*
- * multi acord
+ * multi chorda
  * plays multiple tones based on distance from sensor
  */
-class SensorMultiAcord : public Sensor {
+class SensorMultiChord : public Sensor {
 	private:
 
-		// number of acords
-		byte acordCount;
+		// number of chords
+		byte chordCount;
 
 		// to know if note is on
 		bool noteIsOn[3];
@@ -44,16 +44,16 @@ class SensorMultiAcord : public Sensor {
 		 *  thhreshold level 3: <120,999>
 		 */
 		template< size_t N >
-		SensorMultiAcord(byte id, byte acordCount, byte notesCount, byte notesArr[N][N],
+		SensorMultiChord(byte id, byte chordCount, byte notesCount, byte notesArr[N][N],
 		                 byte threshSize, byte thresholdArr[])
-			: Sensor(id, TONE_MODE_MULTI_ACORD, id) {
+			: Sensor(id, TONE_MODE_MULTI_CHORD, id) {
 
-			this->acordCount = acordCount;
+			this->chordCount = chordCount;
 			this->notesCount = notesCount;
 
-			for (byte i = 0; i < acordCount; i++) {
+			for (byte i = 0; i < chordCount; i++) {
 
-				noteIsOn[i] = false; // acord is default off
+				noteIsOn[i] = false; // chord is default off
 
 				for (byte j = 0; j < notesCount; j++) {
 					noteValue[i][j] = notesArr[i][j];
@@ -68,11 +68,11 @@ class SensorMultiAcord : public Sensor {
 		}
 
 		virtual void sensorOff(MyMidi &mMyMidi) {
-			for (byte acord = 0; acord < notesCount; acord++) {
-				noteIsOn[acord] = false;
+			for (byte chord = 0; chord < notesCount; chord++) {
+				noteIsOn[chord] = false;
 
 				for (byte note = 0; note < notesCount; note++) {
-					mMyMidi.noteOff(getChannel(), noteValue[acord][note], mMyMidi.velocity);
+					mMyMidi.noteOff(getChannel(), noteValue[chord][note], mMyMidi.velocity);
 				}
 			}
 		}
@@ -89,12 +89,12 @@ class SensorMultiAcord : public Sensor {
 			}
 
 
-			for (byte acord = 0; acord < acordCount; acord++) {
+			for (byte chord = 0; chord < chordCount; chord++) {
 				bool inRange = false;
 
 				// loop through thresholh values
 				for (byte th = 0; th < thresholdCount; th++) {
-					if (acord == th) {
+					if (chord == th) {
 						// threhold in middle
 						if (th + 1 < thresholdCount) {
 							if (thresholdFiltered >= thresholdValues[th] && thresholdFiltered < thresholdValues[th + 1]) {
@@ -111,18 +111,18 @@ class SensorMultiAcord : public Sensor {
 				}
 
 				// note ON
-				if (noteIsOn[acord] == false && inRange) {
-					noteIsOn[acord] = true;
+				if (noteIsOn[chord] == false && inRange) {
+					noteIsOn[chord] = true;
 					for (byte note = 0; note < notesCount; note++) {
-						mMyMidi.noteOn(getChannel(), noteValue[acord][note], mMyMidi.velocity);
+						mMyMidi.noteOn(getChannel(), noteValue[chord][note], mMyMidi.velocity);
 					}
 
 					// note OFF
 				}
-				else if (noteIsOn[acord] == true && !inRange) {
-					noteIsOn[acord] = false;
+				else if (noteIsOn[chord] == true && !inRange) {
+					noteIsOn[chord] = false;
 					for (byte note = 0; note < notesCount; note++) {
-						mMyMidi.noteOff(getChannel(), noteValue[acord][note], mMyMidi.velocity);
+						mMyMidi.noteOff(getChannel(), noteValue[chord][note], mMyMidi.velocity);
 					}
 				}
 

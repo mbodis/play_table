@@ -20,12 +20,12 @@
 #include <Sensor.h>
 #include <SensorSingle.h>
 #include <SensorMulti.h>
-#include <SensorAcord.h>
-#include <SensorMultiAcord.h>
+#include <SensorChord.h>
+#include <SensorMultiChord.h>
 #include <SensorArpeggio.h>
 #include <SensorArpeggioCombi.h>
 #include <SensorArpeggioAuto.h>
-#include <SensorArpeggioAcord.h>
+#include <SensorArpeggioChord.h>
 #include <NoteGroup.h>
 #include <NoteSetup.h>
 #include <MyCommunicator.h>

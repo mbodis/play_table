@@ -95,7 +95,7 @@ class SensorArpeggioCombi : public Sensor {
 			for (byte note = 0; note < notesCount; note++) {
 				bool inRange = false;
 
-				// if too close just play acord
+				// if too close just play chord
 				// if (thresholdFiltered > 235) inRange = true;
 
 				if (thresholdRaw > 2 || isLoopingEnabled()) {

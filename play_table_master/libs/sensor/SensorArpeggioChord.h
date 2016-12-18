@@ -1,14 +1,14 @@
-#ifndef SENSORARPEGGIOACORD_H
-#define SENSORARPEGGIOACORD_H
+#ifndef SENSORARPEGGIOCHORD_H
+#define SENSORARPEGGIOCHORD_H
 
 #include <Arduino.h>
 
 /*
  * arpeggio
  * toggle between tones, increase tempo by distance
- * type acord, keep playing previous tones
+ * type chord, keep playing previous tones
  */
-class SensorArpeggioAcord : public Sensor {
+class SensorArpeggioChord : public Sensor {
 	private:
 		// arpeggio counter
 		byte arpCount = 0;
@@ -32,7 +32,7 @@ class SensorArpeggioAcord : public Sensor {
 		 * notesArr <byte[]> - array of note values
 		 *
 		 */
-		SensorArpeggioAcord(byte id, byte notesCount, byte notesArr[]): Sensor(id, TONE_MODE_ARPEGGIO, id) {
+		SensorArpeggioChord(byte id, byte notesCount, byte notesArr[]): Sensor(id, TONE_MODE_ARPEGGIO, id) {
 
 			this->notesCount = notesCount;
 

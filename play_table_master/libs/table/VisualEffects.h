@@ -67,9 +67,9 @@ class VisualEffects {
 					}
 
 					/*
-					* ACORD TONE MODE
+					* CHORD TONE MODE
 					*/
-					if (mTableSensors[sensor]->getMode() == TONE_MODE_ACORD) {
+					if (mTableSensors[sensor]->getMode() == TONE_MODE_CHORD) {
 						MyCommunicator::sendMessageToSlave(mTableSensors[sensor]->getSensorId() + SLAVE_FIRST_ID, 255);
 					}
 
@@ -82,9 +82,9 @@ class VisualEffects {
 					}
 
 					/*
-					* ACORD MULTI TONE
+					* CHORD MULTI TONE
 					*/
-					if (mTableSensors[sensor]->getMode() == TONE_MODE_MULTI_ACORD) {
+					if (mTableSensors[sensor]->getMode() == TONE_MODE_MULTI_CHORD) {
 						mTableSensors[sensor]->incVisualLedHelper(18);
 						MyCommunicator::sendMessageToSlave(mTableSensors[sensor]->getSensorId() + SLAVE_FIRST_ID, mTableSensors[sensor]->getVisualLedHelper());
 					}
