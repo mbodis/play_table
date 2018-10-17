@@ -44,7 +44,12 @@ class TouchSensors {
 
 			// save values for slaves
 			if ((int)newProx > 0) {
-				mMyTable.electrodeLastValues[electrode] = (int)(newProx * 5.5); // value is now between 0-255
+				// software hack - some sensor are
+				if (electrode == 0 || electrode == 2 || electrode == 4 || electrode == 6){
+					mMyTable.electrodeLastValues[electrode] = (int)(newProx * 5.5 * 3); // value is now between 0-255
+				}else{
+					mMyTable.electrodeLastValues[electrode] = (int)(newProx * 5.5); // value is now between 0-255
+				}
 			}
 			else {
 				mMyTable.electrodeLastValues[electrode] = (int)newProx;
